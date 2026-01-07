@@ -1,6 +1,7 @@
 @model VulnMgmt.Web.Models.ViewModels.NistExportViewModel
 @{
     ViewData["Title"] = "NIST Compliance Export";
+    var isAllSitesMode = Model.AllSitesPreview != null;
 }
 
 <div class="mb-4">
@@ -26,12 +27,21 @@
     <div class="col-lg-5">
         <div class="card mb-4">
             <div class="card-header bg-primary text-white">
-                <i class="bi bi-building me-2"></i>Select Site
+                <i class="bi bi-collection me-2"></i>Export Options
             </div>
             <div class="card-body">
+                <div class="mb-4">
+                    <a asp-action="NistExport" asp-route-all="true" class="btn @(isAllSitesMode ? "btn-warning" : "btn-outline-warning") btn-lg w-100">
+                        <i class="bi bi-globe me-2"></i>Export ALL Sites
+                    </a>
+                    <small class="text-muted d-block text-center mt-1">Complete backup of all compliance data</small>
+                </div>
+
+                <hr />
+
                 <form id="siteSelectForm" method="get">
                     <div class="mb-3">
-                        <label for="siteId" class="form-label fw-bold">Site</label>
+                        <label for="siteId" class="form-label fw-bold">Or Select a Single Site</label>
                         <select name="siteId" id="siteId" class="form-select form-select-lg" onchange="this.form.submit()">
                             <option value="">-- Select a Site --</option>
                             @foreach (var site in Model.Sites)
@@ -46,13 +56,24 @@
 
                 @if (Model.Preview != null)
                 {
-                    <hr />
                     <form asp-action="ExportNistJson" method="post">
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="siteId" value="@Model.SelectedSiteId" />
                         <div class="d-grid">
                             <button type="submit" class="btn btn-success btn-lg">
-                                <i class="bi bi-download me-2"></i>Export to JSON
+                                <i class="bi bi-download me-2"></i>Export Site to JSON
+                            </button>
+                        </div>
+                    </form>
+                }
+
+                @if (Model.AllSitesPreview != null)
+                {
+                    <form asp-action="ExportAllNistJson" method="post">
+                        @Html.AntiForgeryToken()
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="bi bi-download me-2"></i>Export All Sites to JSON
                             </button>
                         </div>
                     </form>
@@ -68,7 +89,7 @@
                 <p>This export creates a comprehensive JSON file containing:</p>
                 <ul class="mb-3">
                     <li><strong>Site Information</strong> - Complete site details and POC</li>
-                    <li><strong>All Hosts</strong> - Every host in the site with full details</li>
+                    <li><strong>All Hosts</strong> - Every host with full details</li>
                     <li><strong>STIG Checklists</strong> - All checklist results with:
                         <ul>
                             <li>Benchmark information and version</li>
@@ -96,7 +117,11 @@
 
     <div class="col-lg-7">
         <div id="previewContainer">
-            @if (Model.Preview != null)
+            @if (Model.AllSitesPreview != null)
+            {
+                <partial name="_NistExportAllPreview" model="Model.AllSitesPreview" />
+            }
+            else if (Model.Preview != null)
             {
                 <partial name="_NistExportPreview" model="Model.Preview" />
             }
@@ -105,8 +130,8 @@
                 <div class="card">
                     <div class="card-body text-center py-5">
                         <i class="bi bi-arrow-left-circle display-4 text-muted mb-3"></i>
-                        <h5 class="text-muted">Select a Site</h5>
-                        <p class="text-muted mb-0">Choose a site from the dropdown to preview the export data.</p>
+                        <h5 class="text-muted">Select an Export Option</h5>
+                        <p class="text-muted mb-0">Choose "Export ALL Sites" or select a specific site to preview the export data.</p>
                     </div>
                 </div>
             }

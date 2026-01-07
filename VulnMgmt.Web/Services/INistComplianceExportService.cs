@@ -18,4 +18,14 @@ public interface INistComplianceExportService
     /// Exports all STIG and Nessus data for a site to a comprehensive JSON format
     /// </summary>
     Task<byte[]> ExportSiteToJsonAsync(int siteId, int? userId);
+
+    /// <summary>
+    /// Gets a preview of what will be exported for all sites combined
+    /// </summary>
+    Task<NistExportAllPreview> GetExportAllPreviewAsync();
+
+    /// <summary>
+    /// Exports all STIG and Nessus data for ALL sites to a comprehensive JSON format
+    /// </summary>
+    Task<byte[]> ExportAllSitesToJsonAsync(int? userId);
 }

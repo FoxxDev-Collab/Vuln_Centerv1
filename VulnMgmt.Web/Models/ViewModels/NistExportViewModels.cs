@@ -6,7 +6,7 @@ namespace VulnMgmt.Web.Models.ViewModels;
 #region Export DTOs (for JSON serialization)
 
 /// <summary>
-/// Root object for the NIST Compliance Export JSON
+/// Root object for the NIST Compliance Export JSON (single site)
 /// </summary>
 public class NistComplianceExport
 {
@@ -15,6 +15,48 @@ public class NistComplianceExport
     public ExportSummary Summary { get; set; } = new();
     public List<HostExport> Hosts { get; set; } = new();
     public List<CciSummaryItem> CciSummary { get; set; } = new();
+}
+
+/// <summary>
+/// Root object for the NIST Compliance Export JSON (all sites)
+/// </summary>
+public class NistComplianceExportAll
+{
+    public ExportMetadata ExportMetadata { get; set; } = new();
+    public ExportAllSummary Summary { get; set; } = new();
+    public List<SiteWithHostsExport> Sites { get; set; } = new();
+    public List<CciSummaryItem> CciSummary { get; set; } = new();
+}
+
+/// <summary>
+/// Site export that includes hosts (for all-sites export)
+/// </summary>
+public class SiteWithHostsExport : SiteExport
+{
+    public SiteExportSummary SiteSummary { get; set; } = new();
+    public List<HostExport> Hosts { get; set; } = new();
+}
+
+/// <summary>
+/// Summary for a single site within the all-sites export
+/// </summary>
+public class SiteExportSummary
+{
+    public int TotalHosts { get; set; }
+    public StigChecklistSummary StigChecklists { get; set; } = new();
+    public NessusVulnerabilitySummary NessusVulnerabilities { get; set; } = new();
+}
+
+/// <summary>
+/// Summary across all sites
+/// </summary>
+public class ExportAllSummary
+{
+    public int TotalSites { get; set; }
+    public int TotalHosts { get; set; }
+    public StigChecklistSummary StigChecklists { get; set; } = new();
+    public NessusVulnerabilitySummary NessusVulnerabilities { get; set; } = new();
+    public CciCoverageSummary CciCoverage { get; set; } = new();
 }
 
 public class ExportMetadata
@@ -283,6 +325,7 @@ public class NistExportViewModel
     public List<SiteSelectItem> Sites { get; set; } = new();
     public int? SelectedSiteId { get; set; }
     public NistExportPreview? Preview { get; set; }
+    public NistExportAllPreview? AllSitesPreview { get; set; }
 }
 
 public class SiteSelectItem
@@ -302,6 +345,18 @@ public class NistExportPreview
     public int TotalNessusVulnerabilities { get; set; }
     public int UniqueCciCount { get; set; }
     public DateTime? LastScanDate { get; set; }
+}
+
+public class NistExportAllPreview
+{
+    public int TotalSites { get; set; }
+    public int TotalHosts { get; set; }
+    public int TotalStigChecklists { get; set; }
+    public int TotalStigRuleResults { get; set; }
+    public int TotalNessusVulnerabilities { get; set; }
+    public int UniqueCciCount { get; set; }
+    public DateTime? LastScanDate { get; set; }
+    public List<SiteSelectItem> SiteBreakdown { get; set; } = new();
 }
 
 #endregion

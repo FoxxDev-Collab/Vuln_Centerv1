@@ -108,6 +108,10 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcUmVwb3J0c1xWdWxuZXJhYmlsaXR5U3VtbWFyeS5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/Users/jeremiah.price/Documents/3. Local-Dev/Compliance_Tools/Vuln_Center/VulnMgmt.Web/Views/Reports/_NistExportAllPreview.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcUmVwb3J0c1xfTmlzdEV4cG9ydEFsbFByZXZpZXcuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/Users/jeremiah.price/Documents/3. Local-Dev/Compliance_Tools/Vuln_Center/VulnMgmt.Web/Views/Reports/_NistExportPreview.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcUmVwb3J0c1xfTmlzdEV4cG9ydFByZXZpZXcuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 

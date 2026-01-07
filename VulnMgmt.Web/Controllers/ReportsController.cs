@@ -128,7 +128,7 @@ public class ReportsController : Controller
     }
 
     // GET: Reports/NistExport
-    public async Task<IActionResult> NistExport(int? siteId)
+    public async Task<IActionResult> NistExport(int? siteId, bool? all)
     {
         var sites = await _nistExportService.GetSitesForExportAsync();
         var model = new NistExportViewModel
@@ -137,7 +137,11 @@ public class ReportsController : Controller
             SelectedSiteId = siteId
         };
 
-        if (siteId.HasValue)
+        if (all == true)
+        {
+            model.AllSitesPreview = await _nistExportService.GetExportAllPreviewAsync();
+        }
+        else if (siteId.HasValue)
         {
             model.Preview = await _nistExportService.GetExportPreviewAsync(siteId.Value);
         }
@@ -189,6 +193,30 @@ public class ReportsController : Controller
             _logger.LogError(ex, "Error exporting NIST compliance data for site {SiteId}", siteId);
             TempData["Error"] = "An error occurred while generating the export. Please try again.";
             return RedirectToAction(nameof(NistExport), new { siteId });
+        }
+    }
+
+    // POST: Reports/ExportAllNistJson
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ExportAllNistJson()
+    {
+        var userId = await GetCurrentUserIdAsync();
+
+        _logger.LogInformation("User {User} exporting NIST compliance data for ALL sites", User.Identity?.Name);
+
+        try
+        {
+            var data = await _nistExportService.ExportAllSitesToJsonAsync(userId);
+            var fileName = $"NIST_Compliance_Export_ALL_SITES_{DateTime.Now:yyyyMMdd_HHmmss}.json";
+
+            return File(data, "application/json", fileName);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error exporting NIST compliance data for all sites");
+            TempData["Error"] = "An error occurred while generating the export. Please try again.";
+            return RedirectToAction(nameof(NistExport), new { all = true });
         }
     }
 }

@@ -457,6 +457,302 @@ public class NistComplianceExportService : INistComplianceExportService
 
     #endregion
 
+    #region Export All Sites
+
+    public async Task<NistExportAllPreview> GetExportAllPreviewAsync()
+    {
+        var sites = await _context.Sites
+            .Where(s => s.IsActive)
+            .Include(s => s.Hosts)
+            .ToListAsync();
+
+        var allHostIds = sites.SelectMany(s => s.Hosts.Select(h => h.Id)).ToList();
+
+        var stigChecklistCount = await _context.StigChecklists
+            .Where(c => allHostIds.Contains(c.HostId))
+            .CountAsync();
+
+        var stigResultCount = await _context.StigChecklistResults
+            .Where(r => allHostIds.Contains(r.Checklist.HostId))
+            .CountAsync();
+
+        var nessusVulnCount = await _context.HostVulnerabilities
+            .Where(v => allHostIds.Contains(v.HostId))
+            .CountAsync();
+
+        // Get unique CCIs
+        var uniqueCcis = await _context.StigChecklistResults
+            .Where(r => allHostIds.Contains(r.Checklist.HostId))
+            .Where(r => r.StigRule.CCIs != null && r.StigRule.CCIs != "")
+            .Select(r => r.StigRule.CCIs)
+            .Distinct()
+            .ToListAsync();
+
+        var cciSet = new HashSet<string>();
+        foreach (var cciString in uniqueCcis.Where(c => c != null))
+        {
+            foreach (var cci in cciString!.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            {
+                cciSet.Add(cci);
+            }
+        }
+
+        var lastScanDate = sites.SelectMany(s => s.Hosts).Max(h => h.LastScanDate);
+
+        return new NistExportAllPreview
+        {
+            TotalSites = sites.Count,
+            TotalHosts = allHostIds.Count,
+            TotalStigChecklists = stigChecklistCount,
+            TotalStigRuleResults = stigResultCount,
+            TotalNessusVulnerabilities = nessusVulnCount,
+            UniqueCciCount = cciSet.Count,
+            LastScanDate = lastScanDate,
+            SiteBreakdown = sites.Select(s => new SiteSelectItem
+            {
+                Id = s.Id,
+                Name = s.Name,
+                HostCount = s.Hosts.Count
+            }).OrderBy(s => s.Name).ToList()
+        };
+    }
+
+    public async Task<byte[]> ExportAllSitesToJsonAsync(int? userId)
+    {
+        _logger.LogInformation("Starting NIST compliance export for ALL sites");
+
+        // Load all active sites
+        var sites = await _context.Sites
+            .Where(s => s.IsActive)
+            .OrderBy(s => s.Name)
+            .ToListAsync();
+
+        // Load all hosts
+        var hosts = await _context.Hosts
+            .Where(h => sites.Select(s => s.Id).Contains(h.SiteId))
+            .Include(h => h.Vulnerabilities)
+            .OrderBy(h => h.SiteId)
+            .ThenBy(h => h.DisplayName ?? h.DNSName ?? h.NetBIOSName)
+            .ToListAsync();
+
+        var hostIds = hosts.Select(h => h.Id).ToList();
+
+        // Load all STIG checklists
+        var checklists = await _context.StigChecklists
+            .Where(c => hostIds.Contains(c.HostId))
+            .Include(c => c.BenchmarkVersion)
+                .ThenInclude(v => v.StigBenchmark)
+            .Include(c => c.Results)
+                .ThenInclude(r => r.StigRule)
+            .Include(c => c.Results)
+                .ThenInclude(r => r.ModifiedBy)
+            .Include(c => c.CreatedBy)
+            .Include(c => c.LastModifiedBy)
+            .ToListAsync();
+
+        var checklistsByHost = checklists
+            .GroupBy(c => c.HostId)
+            .ToDictionary(g => g.Key, g => g.ToList());
+
+        // Get user who is exporting
+        string? exportedByUsername = null;
+        if (userId.HasValue)
+        {
+            var user = await _context.Users.FindAsync(userId.Value);
+            exportedByUsername = user?.DisplayName ?? user?.Username;
+        }
+
+        // Build the export object
+        var export = new NistComplianceExportAll
+        {
+            ExportMetadata = new ExportMetadata
+            {
+                ExportDate = DateTime.UtcNow,
+                ExportedBy = exportedByUsername,
+                ExportType = "ATO_COMPLIANCE_PACKAGE_ALL_SITES"
+            },
+            Sites = new List<SiteWithHostsExport>()
+        };
+
+        // CCI aggregation data (across all sites)
+        var cciData = new Dictionary<string, CciAggregation>();
+
+        // Group hosts by site
+        var hostsBySite = hosts.GroupBy(h => h.SiteId).ToDictionary(g => g.Key, g => g.ToList());
+
+        // Process each site
+        foreach (var site in sites)
+        {
+            var siteExport = new SiteWithHostsExport
+            {
+                Id = site.Id,
+                Name = site.Name,
+                Description = site.Description,
+                Location = site.Location,
+                OrganizationName = site.OrganizationName,
+                IsActive = site.IsActive,
+                CreatedDate = site.CreatedDate,
+                ModifiedDate = site.ModifiedDate,
+                Poc = new PointOfContact
+                {
+                    Name = site.POCName,
+                    Email = site.POCEmail,
+                    Phone = site.POCPhone
+                }
+            };
+
+            if (hostsBySite.TryGetValue(site.Id, out var siteHosts))
+            {
+                foreach (var host in siteHosts)
+                {
+                    var hostExport = BuildHostExport(host);
+
+                    // Add STIG checklists
+                    if (checklistsByHost.TryGetValue(host.Id, out var hostChecklists))
+                    {
+                        foreach (var checklist in hostChecklists)
+                        {
+                            var checklistExport = BuildChecklistExport(checklist, host, cciData);
+                            hostExport.StigChecklists.Add(checklistExport);
+                        }
+                    }
+
+                    // Add Nessus vulnerabilities
+                    foreach (var vuln in host.Vulnerabilities)
+                    {
+                        hostExport.NessusVulnerabilities.Add(BuildVulnerabilityExport(vuln));
+                    }
+
+                    siteExport.Hosts.Add(hostExport);
+                }
+            }
+
+            // Calculate site summary
+            siteExport.SiteSummary = BuildSiteSummary(siteExport.Hosts);
+
+            export.Sites.Add(siteExport);
+        }
+
+        // Build CCI summary
+        export.CciSummary = BuildCciSummary(cciData);
+
+        // Calculate overall summary
+        export.Summary = BuildExportAllSummary(export);
+
+        // Serialize to JSON
+        var options = new JsonSerializerOptions
+        {
+            WriteIndented = true,
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+        };
+
+        var json = JsonSerializer.Serialize(export, options);
+
+        _logger.LogInformation("Completed NIST compliance export for ALL sites: {SiteCount} sites, {HostCount} hosts",
+            export.Sites.Count, export.Sites.Sum(s => s.Hosts.Count));
+
+        return System.Text.Encoding.UTF8.GetBytes(json);
+    }
+
+    private static SiteExportSummary BuildSiteSummary(List<HostExport> hosts)
+    {
+        var allStigResults = hosts
+            .SelectMany(h => h.StigChecklists)
+            .SelectMany(c => c.Results)
+            .ToList();
+
+        var allVulns = hosts
+            .SelectMany(h => h.NessusVulnerabilities)
+            .ToList();
+
+        return new SiteExportSummary
+        {
+            TotalHosts = hosts.Count,
+            StigChecklists = new StigChecklistSummary
+            {
+                TotalChecklists = hosts.Sum(h => h.StigChecklists.Count),
+                TotalRuleResults = allStigResults.Count,
+                Open = allStigResults.Count(r => r.Status == StigResultStatus.Open),
+                NotAFinding = allStigResults.Count(r => r.Status == StigResultStatus.NotAFinding),
+                NotApplicable = allStigResults.Count(r => r.Status == StigResultStatus.NotApplicable),
+                NotReviewed = allStigResults.Count(r => r.Status == StigResultStatus.NotReviewed)
+            },
+            NessusVulnerabilities = new NessusVulnerabilitySummary
+            {
+                Total = allVulns.Count,
+                Critical = allVulns.Count(v => v.Severity == Severity.Critical),
+                High = allVulns.Count(v => v.Severity == Severity.High),
+                Medium = allVulns.Count(v => v.Severity == Severity.Medium),
+                Low = allVulns.Count(v => v.Severity == Severity.Low),
+                Info = allVulns.Count(v => v.Severity == Severity.Info),
+                Exploitable = allVulns.Count(v => v.IsExploitable),
+                ByRemediationStatus = new RemediationStatusSummary
+                {
+                    Open = allVulns.Count(v => v.RemediationStatus == RemediationStatus.Open),
+                    InProgress = allVulns.Count(v => v.RemediationStatus == RemediationStatus.InProgress),
+                    Remediated = allVulns.Count(v => v.RemediationStatus == RemediationStatus.Remediated),
+                    Accepted = allVulns.Count(v => v.RemediationStatus == RemediationStatus.Accepted),
+                    FalsePositive = allVulns.Count(v => v.RemediationStatus == RemediationStatus.FalsePositive)
+                }
+            }
+        };
+    }
+
+    private static ExportAllSummary BuildExportAllSummary(NistComplianceExportAll export)
+    {
+        var allStigResults = export.Sites
+            .SelectMany(s => s.Hosts)
+            .SelectMany(h => h.StigChecklists)
+            .SelectMany(c => c.Results)
+            .ToList();
+
+        var allVulns = export.Sites
+            .SelectMany(s => s.Hosts)
+            .SelectMany(h => h.NessusVulnerabilities)
+            .ToList();
+
+        return new ExportAllSummary
+        {
+            TotalSites = export.Sites.Count,
+            TotalHosts = export.Sites.Sum(s => s.Hosts.Count),
+            StigChecklists = new StigChecklistSummary
+            {
+                TotalChecklists = export.Sites.Sum(s => s.Hosts.Sum(h => h.StigChecklists.Count)),
+                TotalRuleResults = allStigResults.Count,
+                Open = allStigResults.Count(r => r.Status == StigResultStatus.Open),
+                NotAFinding = allStigResults.Count(r => r.Status == StigResultStatus.NotAFinding),
+                NotApplicable = allStigResults.Count(r => r.Status == StigResultStatus.NotApplicable),
+                NotReviewed = allStigResults.Count(r => r.Status == StigResultStatus.NotReviewed)
+            },
+            NessusVulnerabilities = new NessusVulnerabilitySummary
+            {
+                Total = allVulns.Count,
+                Critical = allVulns.Count(v => v.Severity == Severity.Critical),
+                High = allVulns.Count(v => v.Severity == Severity.High),
+                Medium = allVulns.Count(v => v.Severity == Severity.Medium),
+                Low = allVulns.Count(v => v.Severity == Severity.Low),
+                Info = allVulns.Count(v => v.Severity == Severity.Info),
+                Exploitable = allVulns.Count(v => v.IsExploitable),
+                ByRemediationStatus = new RemediationStatusSummary
+                {
+                    Open = allVulns.Count(v => v.RemediationStatus == RemediationStatus.Open),
+                    InProgress = allVulns.Count(v => v.RemediationStatus == RemediationStatus.InProgress),
+                    Remediated = allVulns.Count(v => v.RemediationStatus == RemediationStatus.Remediated),
+                    Accepted = allVulns.Count(v => v.RemediationStatus == RemediationStatus.Accepted),
+                    FalsePositive = allVulns.Count(v => v.RemediationStatus == RemediationStatus.FalsePositive)
+                }
+            },
+            CciCoverage = new CciCoverageSummary
+            {
+                TotalUniqueCcis = export.CciSummary.Count,
+                CcisWithOpenFindings = export.CciSummary.Count(c => c.OpenFindingCount > 0)
+            }
+        };
+    }
+
+    #endregion
+
     #region Helper Classes
 
     private class CciAggregation
