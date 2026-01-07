@@ -233,3 +233,8 @@ C:\Users\jeremiah.price\Documents\3. Local-Dev\Compliance_Tools\Vuln_Center\Vuln
 C:\Users\jeremiah.price\Documents\3. Local-Dev\Compliance_Tools\Vuln_Center\VulnMgmt.Web\obj\Debug\net9.0\VulnMgmt.Web.genruntimeconfig.cache
 C:\Users\jeremiah.price\Documents\3. Local-Dev\Compliance_Tools\Vuln_Center\VulnMgmt.Web\obj\Debug\net9.0\ref\VulnMgmt.Web.dll
 C:\Users\jeremiah.price\Documents\3. Local-Dev\Compliance_Tools\Vuln_Center\VulnMgmt.Web\bin\Debug\net9.0\BCrypt.Net-Next.dll
+C:\Users\jeremiah.price\Documents\3. Local-Dev\Compliance_Tools\Vuln_Center\VulnMgmt.Web\obj\Debug\net9.0\VulnMgmt.Web.sourcelink.json
+C:\Users\jeremiah.price\Documents\3. Local-Dev\Compliance_Tools\Vuln_Center\VulnMgmt.Web\obj\Debug\net9.0\compressed\17s6zul4l6-pza3ci5hgg.gz
+C:\Users\jeremiah.price\Documents\3. Local-Dev\Compliance_Tools\Vuln_Center\VulnMgmt.Web\obj\Debug\net9.0\compressed\n8ho1s8etx-aph99e4ks0.gz
+C:\Users\jeremiah.price\Documents\3. Local-Dev\Compliance_Tools\Vuln_Center\VulnMgmt.Web\obj\Debug\net9.0\compressed\sryzo6hnfr-mqsp21rlof.gz
+C:\Users\jeremiah.price\Documents\3. Local-Dev\Compliance_Tools\Vuln_Center\VulnMgmt.Web\obj\Debug\net9.0\compressed\5wgr666o5e-6q0a62eh3a.gz

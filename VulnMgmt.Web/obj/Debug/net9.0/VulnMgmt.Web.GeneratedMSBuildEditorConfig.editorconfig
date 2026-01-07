@@ -80,6 +80,14 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9zdFxJbmRleC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/Users/jeremiah.price/Documents/3. Local-Dev/Compliance_Tools/Vuln_Center/VulnMgmt.Web/Views/Metrics/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcTWV0cmljc1xJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/jeremiah.price/Documents/3. Local-Dev/Compliance_Tools/Vuln_Center/VulnMgmt.Web/Views/Metrics/Site.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcTWV0cmljc1xTaXRlLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/Users/jeremiah.price/Documents/3. Local-Dev/Compliance_Tools/Vuln_Center/VulnMgmt.Web/Views/Reports/Export.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcUmVwb3J0c1xFeHBvcnQuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
@@ -92,8 +100,16 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcUmVwb3J0c1xJbmRleC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/Users/jeremiah.price/Documents/3. Local-Dev/Compliance_Tools/Vuln_Center/VulnMgmt.Web/Views/Reports/NistExport.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcUmVwb3J0c1xOaXN0RXhwb3J0LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/Users/jeremiah.price/Documents/3. Local-Dev/Compliance_Tools/Vuln_Center/VulnMgmt.Web/Views/Reports/VulnerabilitySummary.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcUmVwb3J0c1xWdWxuZXJhYmlsaXR5U3VtbWFyeS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/jeremiah.price/Documents/3. Local-Dev/Compliance_Tools/Vuln_Center/VulnMgmt.Web/Views/Reports/_NistExportPreview.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcUmVwb3J0c1xfTmlzdEV4cG9ydFByZXZpZXcuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
 [C:/Users/jeremiah.price/Documents/3. Local-Dev/Compliance_Tools/Vuln_Center/VulnMgmt.Web/Views/ScanImport/Delete.cshtml]

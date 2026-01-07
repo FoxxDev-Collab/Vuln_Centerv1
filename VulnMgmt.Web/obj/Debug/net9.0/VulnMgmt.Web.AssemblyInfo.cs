@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("VulnMgmt.Web")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+bca160f9b65ca79d9c091e92d4e8523e846911db")]
 [assembly: System.Reflection.AssemblyProductAttribute("VulnMgmt.Web")]
 [assembly: System.Reflection.AssemblyTitleAttribute("VulnMgmt.Web")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

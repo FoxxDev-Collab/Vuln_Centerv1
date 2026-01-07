@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - Vulnerability Management Center</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap-icons/bootstrap-icons.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/VulnMgmt.Web.styles.css" asp-append-version="true" />
     @await RenderSectionAsync("Styles", required: false)
@@ -27,6 +27,11 @@
                         <li class="nav-item">
                             <a class="nav-link" asp-controller="Home" asp-action="Index">
                                 <i class="bi bi-house-door me-1"></i>Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Metrics" asp-action="Index">
+                                <i class="bi bi-graph-up-arrow me-1"></i>Metrics
                             </a>
                         </li>
                         <li class="nav-item">
@@ -58,6 +63,12 @@
                                 <li>
                                     <a class="dropdown-item" asp-controller="Reports" asp-action="Index">
                                         <i class="bi bi-file-earmark-bar-graph me-2"></i>Reports
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider" /></li>
+                                <li>
+                                    <a class="dropdown-item" asp-controller="Reports" asp-action="NistExport">
+                                        <i class="bi bi-shield-check me-2"></i>NIST Compliance Export
                                     </a>
                                 </li>
                             </ul>

@@ -1,0 +1,115 @@
+@model VulnMgmt.Web.Models.ViewModels.NistExportViewModel
+@{
+    ViewData["Title"] = "NIST Compliance Export";
+}
+
+<div class="mb-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-1">
+            <li class="breadcrumb-item"><a asp-action="Index">Reports</a></li>
+            <li class="breadcrumb-item active">NIST Compliance Export</li>
+        </ol>
+    </nav>
+    <h1 class="h3"><i class="bi bi-shield-check me-2"></i>NIST Compliance Export</h1>
+    <p class="text-muted">Export comprehensive STIG and Nessus vulnerability data for ATO package preparation.</p>
+</div>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<div class="row">
+    <div class="col-lg-5">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <i class="bi bi-building me-2"></i>Select Site
+            </div>
+            <div class="card-body">
+                <form id="siteSelectForm" method="get">
+                    <div class="mb-3">
+                        <label for="siteId" class="form-label fw-bold">Site</label>
+                        <select name="siteId" id="siteId" class="form-select form-select-lg" onchange="this.form.submit()">
+                            <option value="">-- Select a Site --</option>
+                            @foreach (var site in Model.Sites)
+                            {
+                                <option value="@site.Id" selected="@(Model.SelectedSiteId == site.Id)">
+                                    @site.Name (@site.HostCount hosts)
+                                </option>
+                            }
+                        </select>
+                    </div>
+                </form>
+
+                @if (Model.Preview != null)
+                {
+                    <hr />
+                    <form asp-action="ExportNistJson" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="siteId" value="@Model.SelectedSiteId" />
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="bi bi-download me-2"></i>Export to JSON
+                            </button>
+                        </div>
+                    </form>
+                }
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-info-circle me-2"></i>About This Export
+            </div>
+            <div class="card-body small">
+                <p>This export creates a comprehensive JSON file containing:</p>
+                <ul class="mb-3">
+                    <li><strong>Site Information</strong> - Complete site details and POC</li>
+                    <li><strong>All Hosts</strong> - Every host in the site with full details</li>
+                    <li><strong>STIG Checklists</strong> - All checklist results with:
+                        <ul>
+                            <li>Benchmark information and version</li>
+                            <li>Every rule result (status, findings, comments)</li>
+                            <li>Full rule content (check, fix, discussion)</li>
+                            <li>CCI identifiers for NIST mapping</li>
+                        </ul>
+                    </li>
+                    <li><strong>Nessus Vulnerabilities</strong> - All scan results with:
+                        <ul>
+                            <li>Plugin details and CVE information</li>
+                            <li>Exploit information</li>
+                            <li>Remediation status and notes</li>
+                        </ul>
+                    </li>
+                    <li><strong>CCI Summary</strong> - Aggregated compliance control data</li>
+                </ul>
+                <div class="alert alert-info mb-0">
+                    <i class="bi bi-lightbulb me-2"></i>
+                    <strong>Use Case:</strong> This export is designed for ATO package preparation and can be imported into your NIST Compliance tracking system.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-7">
+        <div id="previewContainer">
+            @if (Model.Preview != null)
+            {
+                <partial name="_NistExportPreview" model="Model.Preview" />
+            }
+            else
+            {
+                <div class="card">
+                    <div class="card-body text-center py-5">
+                        <i class="bi bi-arrow-left-circle display-4 text-muted mb-3"></i>
+                        <h5 class="text-muted">Select a Site</h5>
+                        <p class="text-muted mb-0">Choose a site from the dropdown to preview the export data.</p>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>

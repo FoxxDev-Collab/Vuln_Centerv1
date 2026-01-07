@@ -1,0 +1,362 @@
+/* ATO Metrics Dashboard Styles */
+
+/* Executive Summary Cards */
+.metrics-card {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.metrics-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Risk Level Indicators */
+.risk-badge {
+    font-size: 0.75rem;
+    padding: 0.35em 0.65em;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.risk-critical {
+    background-color: #dc3545;
+    color: white;
+}
+
+.risk-high {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.risk-medium {
+    background-color: #0dcaf0;
+    color: #212529;
+}
+
+.risk-low {
+    background-color: #198754;
+    color: white;
+}
+
+.risk-minimal {
+    background-color: #6c757d;
+    color: white;
+}
+
+/* Compliance Gauge */
+.compliance-gauge {
+    position: relative;
+    width: 200px;
+    height: 200px;
+    margin: 0 auto;
+}
+
+.compliance-gauge-circle {
+    transform: rotate(-90deg);
+}
+
+.compliance-gauge-background {
+    fill: none;
+    stroke: #e9ecef;
+    stroke-width: 12;
+}
+
+.compliance-gauge-progress {
+    fill: none;
+    stroke-width: 12;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 1s ease-in-out;
+}
+
+.compliance-gauge-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+}
+
+.compliance-gauge-percentage {
+    font-size: 2.5rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.compliance-gauge-label {
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+/* Chart Containers */
+.chart-container {
+    position: relative;
+    height: 300px;
+    width: 100%;
+}
+
+.chart-container-sm {
+    height: 200px;
+}
+
+.chart-container-lg {
+    height: 400px;
+}
+
+/* Site Breakdown Table */
+.site-breakdown-table {
+    font-size: 0.875rem;
+}
+
+.site-breakdown-table th {
+    font-weight: 600;
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.site-breakdown-table td {
+    vertical-align: middle;
+}
+
+.site-breakdown-table .severity-cell {
+    min-width: 50px;
+    text-align: center;
+}
+
+.site-breakdown-table tr:hover {
+    background-color: rgba(0, 123, 255, 0.05);
+}
+
+.site-row-clickable {
+    cursor: pointer;
+}
+
+.site-row-clickable:hover {
+    background-color: rgba(0, 123, 255, 0.1) !important;
+}
+
+/* Host Detail Panel */
+.host-detail-panel {
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border-radius: 0.5rem;
+    border: 1px solid #dee2e6;
+}
+
+/* Stat Cards */
+.stat-card {
+    border-radius: 0.5rem;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.stat-card .stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.stat-card .stat-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.stat-card.bg-gradient-danger {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+}
+
+.stat-card.bg-gradient-warning {
+    background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+}
+
+.stat-card.bg-gradient-info {
+    background: linear-gradient(135deg, #0dcaf0 0%, #0aa2c0 100%);
+}
+
+.stat-card.bg-gradient-success {
+    background: linear-gradient(135deg, #198754 0%, #146c43 100%);
+}
+
+.stat-card.bg-gradient-primary {
+    background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
+}
+
+.stat-card.bg-gradient-secondary {
+    background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+}
+
+/* Section Headers */
+.section-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.section-header h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.section-header .section-icon {
+    font-size: 1.5rem;
+    margin-right: 0.75rem;
+    color: #6c757d;
+}
+
+/* Top Vulnerabilities Table */
+.top-vulns-table {
+    font-size: 0.875rem;
+}
+
+.top-vulns-table .vuln-name {
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Benchmark Compliance Bars */
+.benchmark-bar {
+    height: 24px;
+    border-radius: 4px;
+    overflow: hidden;
+    background-color: #e9ecef;
+}
+
+.benchmark-bar-fill {
+    height: 100%;
+    transition: width 0.5s ease-in-out;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: white;
+}
+
+/* Loading State */
+.metrics-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    color: #6c757d;
+}
+
+.metrics-loading .spinner-border {
+    width: 3rem;
+    height: 3rem;
+    margin-bottom: 1rem;
+}
+
+/* Print Styles */
+@media print {
+    .metrics-card {
+        break-inside: avoid;
+    }
+
+    .chart-container {
+        height: 250px !important;
+    }
+
+    .no-print {
+        display: none !important;
+    }
+
+    .site-breakdown-table {
+        font-size: 0.75rem;
+    }
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .stat-card .stat-value {
+        font-size: 1.5rem;
+    }
+
+    .chart-container {
+        height: 250px;
+    }
+
+    .compliance-gauge {
+        width: 150px;
+        height: 150px;
+    }
+
+    .compliance-gauge-percentage {
+        font-size: 2rem;
+    }
+}
+
+/* Animation for data refresh */
+@keyframes pulse {
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+.refreshing {
+    animation: pulse 1s ease-in-out infinite;
+}
+
+/* CAT Level Badges */
+.cat-badge {
+    font-weight: 600;
+    min-width: 60px;
+    display: inline-block;
+    text-align: center;
+}
+
+.cat-i {
+    background-color: #dc3545;
+    color: white;
+}
+
+.cat-ii {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.cat-iii {
+    background-color: #0dcaf0;
+    color: #212529;
+}
+
+/* Expand/Collapse Icons */
+.expand-icon {
+    transition: transform 0.2s ease-in-out;
+}
+
+.expand-icon.rotated {
+    transform: rotate(90deg);
+}
+
+/* Host List in Site Detail */
+.host-list-item {
+    border-left: 4px solid transparent;
+    transition: border-color 0.2s ease-in-out;
+}
+
+.host-list-item:hover {
+    border-left-color: #0d6efd;
+}
+
+.host-list-item.risk-critical-border {
+    border-left-color: #dc3545;
+}
+
+.host-list-item.risk-high-border {
+    border-left-color: #ffc107;
+}

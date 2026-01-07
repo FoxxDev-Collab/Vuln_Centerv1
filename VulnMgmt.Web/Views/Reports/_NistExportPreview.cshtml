@@ -1,0 +1,120 @@
+@model VulnMgmt.Web.Models.ViewModels.NistExportPreview
+
+<div class="card mb-4">
+    <div class="card-header bg-success text-white">
+        <i class="bi bi-eye me-2"></i>Export Preview: @Model.SiteName
+    </div>
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div class="card bg-light h-100">
+                    <div class="card-body text-center">
+                        <i class="bi bi-pc-display display-6 text-primary mb-2"></i>
+                        <h2 class="mb-0">@Model.TotalHosts</h2>
+                        <p class="text-muted mb-0">Hosts</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card bg-light h-100">
+                    <div class="card-body text-center">
+                        <i class="bi bi-clipboard-check display-6 text-success mb-2"></i>
+                        <h2 class="mb-0">@Model.TotalStigChecklists</h2>
+                        <p class="text-muted mb-0">STIG Checklists</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card bg-light h-100">
+                    <div class="card-body text-center">
+                        <i class="bi bi-list-check display-6 text-info mb-2"></i>
+                        <h2 class="mb-0">@Model.TotalStigRuleResults.ToString("N0")</h2>
+                        <p class="text-muted mb-0">STIG Rule Results</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card bg-light h-100">
+                    <div class="card-body text-center">
+                        <i class="bi bi-bug display-6 text-danger mb-2"></i>
+                        <h2 class="mb-0">@Model.TotalNessusVulnerabilities.ToString("N0")</h2>
+                        <p class="text-muted mb-0">Nessus Vulnerabilities</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <i class="bi bi-diagram-3 me-2"></i>Compliance Coverage
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="d-flex align-items-center mb-2">
+                    <div class="me-3">
+                        <span class="badge bg-primary fs-5">@Model.UniqueCciCount</span>
+                    </div>
+                    <div>
+                        <strong>Unique CCIs</strong>
+                        <br />
+                        <small class="text-muted">Control Correlation Identifiers covered by STIG rules</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="d-flex align-items-center mb-2">
+                    <div class="me-3">
+                        <span class="badge bg-secondary fs-5">
+                            @(Model.LastScanDate?.ToString("MMM dd, yyyy") ?? "N/A")
+                        </span>
+                    </div>
+                    <div>
+                        <strong>Last Scan Date</strong>
+                        <br />
+                        <small class="text-muted">Most recent scan across all hosts</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <i class="bi bi-file-code me-2"></i>JSON Structure Preview
+    </div>
+    <div class="card-body">
+        <pre class="bg-dark text-light p-3 rounded small" style="max-height: 300px; overflow-y: auto;"><code>{
+  "exportMetadata": {
+    "exportDate": "@DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ")",
+    "exportedBy": "@User.Identity?.Name",
+    "exportType": "ATO_COMPLIANCE_PACKAGE"
+  },
+  "site": {
+    "name": "@Model.SiteName",
+    ...
+  },
+  "summary": {
+    "totalHosts": @Model.TotalHosts,
+    "stigChecklists": { "total": @Model.TotalStigChecklists, ... },
+    "nessusVulnerabilities": { "total": @Model.TotalNessusVulnerabilities, ... },
+    "cciCoverage": { "totalUniqueCcis": @Model.UniqueCciCount, ... }
+  },
+  "hosts": [
+    {
+      "dnsName": "hostname.domain.com",
+      "stigChecklists": [ ... ],
+      "nessusVulnerabilities": [ ... ]
+    },
+    ... (@Model.TotalHosts total)
+  ],
+  "cciSummary": [
+    { "cciId": "CCI-000366", "openFindingCount": 0, ... },
+    ... (@Model.UniqueCciCount total)
+  ]
+}</code></pre>
+    </div>
+</div>

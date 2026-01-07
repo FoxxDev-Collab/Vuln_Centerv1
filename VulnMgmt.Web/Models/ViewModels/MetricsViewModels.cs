@@ -88,7 +88,7 @@ public class VulnerabilityMetrics
 /// </summary>
 public class TopVulnerabilityItem
 {
-    public string PluginId { get; set; } = string.Empty;
+    public int PluginId { get; set; }
     public string PluginName { get; set; } = string.Empty;
     public Severity Severity { get; set; }
     public int AffectedHostCount { get; set; }

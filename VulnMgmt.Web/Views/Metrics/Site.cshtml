@@ -1,0 +1,444 @@
+@model VulnMgmt.Web.Models.ViewModels.SiteDetailMetricsViewModel
+@{
+    ViewData["Title"] = $"Metrics - {Model.SiteName}";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/metrics.css" asp-append-version="true" />
+}
+
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-action="Index">ATO Metrics</a></li>
+        <li class="breadcrumb-item active">@Model.SiteName</li>
+    </ol>
+</nav>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-1">
+            <i class="bi bi-building me-2"></i>@Model.SiteName
+        </h1>
+        @if (!string.IsNullOrEmpty(Model.Location))
+        {
+            <p class="text-muted mb-0"><i class="bi bi-geo-alt me-1"></i>@Model.Location</p>
+        }
+        @if (!string.IsNullOrEmpty(Model.OrganizationName))
+        {
+            <p class="text-muted mb-0"><i class="bi bi-briefcase me-1"></i>@Model.OrganizationName</p>
+        }
+    </div>
+    <div class="no-print">
+        <a asp-controller="Site" asp-action="Details" asp-route-id="@Model.SiteId" class="btn btn-outline-secondary">
+            <i class="bi bi-gear me-1"></i>Manage Site
+        </a>
+        <button type="button" class="btn btn-outline-secondary ms-2" onclick="window.print()">
+            <i class="bi bi-printer me-1"></i>Print
+        </button>
+    </div>
+</div>
+
+<!-- Site Summary Stats -->
+<div class="row mb-4">
+    <div class="col-md-2">
+        <div class="card stat-card bg-gradient-info text-white h-100">
+            <div class="card-body text-center">
+                <div class="stat-value">@Model.Summary.TotalHosts</div>
+                <div class="stat-label">Total Hosts</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card stat-card bg-gradient-warning text-dark h-100">
+            <div class="card-body text-center">
+                <div class="stat-value">@Model.Summary.OpenVulnerabilities</div>
+                <div class="stat-label">Open Vulns</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card stat-card bg-gradient-danger text-white h-100">
+            <div class="card-body text-center">
+                <div class="stat-value">@Model.Summary.CriticalCount</div>
+                <div class="stat-label">Critical</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card stat-card bg-gradient-danger text-white h-100">
+            <div class="card-body text-center">
+                <div class="stat-value">@Model.Summary.HighCount</div>
+                <div class="stat-label">High</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card stat-card bg-gradient-danger text-white h-100">
+            <div class="card-body text-center">
+                <div class="stat-value">@Model.Summary.ExploitableCount</div>
+                <div class="stat-label">Exploitable</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card stat-card bg-gradient-success text-white h-100">
+            <div class="card-body text-center">
+                <div class="stat-value">@Model.Summary.StigCompliancePercentage.ToString("F1")%</div>
+                <div class="stat-label">STIG Compliance</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Risk Level Banner -->
+@{
+    var riskClass = Model.Summary.RiskLevel switch
+    {
+        "Critical" => "alert-danger",
+        "High" => "alert-warning",
+        "Medium" => "alert-info",
+        _ => "alert-success"
+    };
+}
+<div class="alert @riskClass d-flex align-items-center mb-4">
+    <i class="bi bi-shield-exclamation me-3" style="font-size: 1.5rem;"></i>
+    <div>
+        <strong>Site Risk Level: @Model.Summary.RiskLevel</strong>
+        <div class="small">
+            @Model.Summary.StigChecklists STIG Checklists | @Model.Summary.StigOpenFindings Open STIG Findings
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row mb-4">
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-danger text-white">
+                <i class="bi bi-shield-exclamation me-2"></i>Vulnerability Distribution
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-3">By Severity</h6>
+                        <div class="chart-container chart-container-sm">
+                            <canvas id="siteVulnSeverityChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-3">By Status</h6>
+                        <div class="chart-container chart-container-sm">
+                            <canvas id="siteVulnStatusChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-success text-white">
+                <i class="bi bi-clipboard2-check me-2"></i>STIG Compliance
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-5 text-center">
+                        <h6 class="text-muted mb-3">Compliance Rate</h6>
+                        <div class="compliance-gauge">
+                            <svg viewBox="0 0 160 160" class="compliance-gauge-circle">
+                                <circle cx="80" cy="80" r="70" class="compliance-gauge-background"></circle>
+                                <circle cx="80" cy="80" r="70" class="compliance-gauge-progress" id="siteComplianceGauge"></circle>
+                            </svg>
+                            <div class="compliance-gauge-text">
+                                <div class="compliance-gauge-percentage" id="siteComplianceText">@Model.StigMetrics.CompliancePercentage.ToString("F1")%</div>
+                                <div class="compliance-gauge-label">Compliant</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-7">
+                        <h6 class="text-muted mb-3">Finding Status</h6>
+                        <div class="chart-container chart-container-sm">
+                            <canvas id="siteStigStatusChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Top Vulnerabilities for Site -->
+<div class="card mb-4">
+    <div class="card-header">
+        <i class="bi bi-exclamation-triangle me-2"></i>Top Vulnerabilities at This Site
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover top-vulns-table mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Vulnerability</th>
+                        <th class="text-center">Severity</th>
+                        <th class="text-center">Affected Hosts</th>
+                        <th class="text-center">CVE</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var vuln in Model.VulnerabilityMetrics.TopVulnerabilities)
+                    {
+                        var sevClass = vuln.Severity switch
+                        {
+                            VulnMgmt.Web.Models.Domain.Severity.Critical => "bg-danger",
+                            VulnMgmt.Web.Models.Domain.Severity.High => "bg-warning text-dark",
+                            VulnMgmt.Web.Models.Domain.Severity.Medium => "bg-info",
+                            VulnMgmt.Web.Models.Domain.Severity.Low => "bg-primary",
+                            _ => "bg-secondary"
+                        };
+                        <tr>
+                            <td class="vuln-name" title="@vuln.PluginName">
+                                @vuln.PluginName
+                                @if (vuln.IsExploitable)
+                                {
+                                    <span class="badge bg-danger ms-1" title="Exploitable">!</span>
+                                }
+                            </td>
+                            <td class="text-center"><span class="badge @sevClass">@vuln.Severity</span></td>
+                            <td class="text-center">@vuln.AffectedHostCount</td>
+                            <td class="text-center"><small>@(vuln.CVE ?? "-")</small></td>
+                        </tr>
+                    }
+                    @if (!Model.VulnerabilityMetrics.TopVulnerabilities.Any())
+                    {
+                        <tr>
+                            <td colspan="4" class="text-center text-muted py-4">No open vulnerabilities found at this site</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Host Breakdown -->
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-pc-display me-2"></i>Host-by-Host Breakdown</span>
+        <span class="badge bg-secondary">@Model.Hosts.Count hosts</span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover site-breakdown-table mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Host</th>
+                        <th class="text-center">Type</th>
+                        <th class="text-center severity-cell">Critical</th>
+                        <th class="text-center severity-cell">High</th>
+                        <th class="text-center severity-cell">Medium</th>
+                        <th class="text-center">Open Vulns</th>
+                        <th class="text-center" style="min-width: 120px;">STIG Compliance</th>
+                        <th class="text-center">Risk</th>
+                        <th class="text-center no-print">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var host in Model.Hosts)
+                    {
+                        var hostRiskClass = host.RiskLevel switch
+                        {
+                            "Critical" => "risk-critical",
+                            "High" => "risk-high",
+                            "Medium" => "risk-medium",
+                            "Low" => "risk-low",
+                            _ => "risk-minimal"
+                        };
+                        var complianceClass = host.StigCompliancePercentage >= 90 ? "bg-success" :
+                                             host.StigCompliancePercentage >= 70 ? "bg-primary" :
+                                             host.StigCompliancePercentage >= 50 ? "bg-warning" : "bg-danger";
+                        var borderClass = host.CriticalCount > 0 ? "risk-critical-border" : host.HighCount > 0 ? "risk-high-border" : "";
+                        <tr class="host-list-item @borderClass">
+                            <td>
+                                <a asp-controller="Host" asp-action="Details" asp-route-id="@host.HostId" class="text-decoration-none">
+                                    <strong>@host.HostName</strong>
+                                </a>
+                                @if (!string.IsNullOrEmpty(host.IPAddress))
+                                {
+                                    <br /><small class="text-muted">@host.IPAddress</small>
+                                }
+                                @if (!string.IsNullOrEmpty(host.OperatingSystem))
+                                {
+                                    <br /><small class="text-muted">@host.OperatingSystem</small>
+                                }
+                            </td>
+                            <td class="text-center"><small>@host.AssetType</small></td>
+                            <td class="text-center severity-cell">
+                                @if (host.CriticalCount > 0)
+                                {
+                                    <span class="badge bg-danger">@host.CriticalCount</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">0</span>
+                                }
+                            </td>
+                            <td class="text-center severity-cell">
+                                @if (host.HighCount > 0)
+                                {
+                                    <span class="badge bg-warning text-dark">@host.HighCount</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">0</span>
+                                }
+                            </td>
+                            <td class="text-center severity-cell">
+                                @if (host.MediumCount > 0)
+                                {
+                                    <span class="badge bg-info">@host.MediumCount</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">0</span>
+                                }
+                            </td>
+                            <td class="text-center">@host.OpenVulnerabilities</td>
+                            <td class="text-center">
+                                @if (host.StigTotalFindings > 0)
+                                {
+                                    <div class="benchmark-bar">
+                                        <div class="benchmark-bar-fill @complianceClass" style="width: @host.StigCompliancePercentage%">
+                                            @host.StigCompliancePercentage.ToString("F1")%
+                                        </div>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">N/A</span>
+                                }
+                            </td>
+                            <td class="text-center">
+                                <span class="badge risk-badge @hostRiskClass">@host.RiskLevel</span>
+                            </td>
+                            <td class="text-center no-print">
+                                <a asp-controller="Host" asp-action="Details" asp-route-id="@host.HostId"
+                                   class="btn btn-sm btn-outline-primary" title="View Host Details">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                    @if (!Model.Hosts.Any())
+                    {
+                        <tr>
+                            <td colspan="9" class="text-center text-muted py-4">
+                                No hosts found at this site.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="mb-4">
+    <a asp-action="Index" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-2"></i>Back to ATO Metrics
+    </a>
+</div>
+
+@section Scripts {
+    <script src="~/lib/chartjs/chart.umd.min.js"></script>
+    <script src="~/js/metrics.js" asp-append-version="true"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Vulnerability Severity Chart
+            const vulnSevCtx = document.getElementById('siteVulnSeverityChart').getContext('2d');
+            new Chart(vulnSevCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Critical', 'High', 'Medium', 'Low', 'Info'],
+                    datasets: [{
+                        data: [@string.Join(",", Model.VulnerabilityMetrics.SeverityData)],
+                        backgroundColor: ['#dc3545', '#ffc107', '#0dcaf0', '#0d6efd', '#6c757d'],
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { padding: 10, usePointStyle: true, font: { size: 11 } } }
+                    },
+                    cutout: '60%'
+                }
+            });
+
+            // Vulnerability Status Chart
+            const vulnStatusCtx = document.getElementById('siteVulnStatusChart').getContext('2d');
+            new Chart(vulnStatusCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Open', 'In Progress', 'Remediated', 'Accepted', 'False Positive'],
+                    datasets: [{
+                        data: [@string.Join(",", Model.VulnerabilityMetrics.StatusData)],
+                        backgroundColor: ['#dc3545', '#ffc107', '#198754', '#0d6efd', '#6c757d'],
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' } },
+                        y: { grid: { display: false } }
+                    }
+                }
+            });
+
+            // STIG Status Chart
+            const stigStatusCtx = document.getElementById('siteStigStatusChart').getContext('2d');
+            new Chart(stigStatusCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Open', 'Not a Finding', 'Not Applicable', 'Not Reviewed'],
+                    datasets: [{
+                        data: [@string.Join(",", Model.StigMetrics.StatusData)],
+                        backgroundColor: ['#dc3545', '#198754', '#6c757d', '#adb5bd'],
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { padding: 10, usePointStyle: true, font: { size: 11 } } }
+                    },
+                    cutout: '60%'
+                }
+            });
+
+            // Update compliance gauge
+            const gauge = document.getElementById('siteComplianceGauge');
+            const text = document.getElementById('siteComplianceText');
+            const percentage = @Model.StigMetrics.CompliancePercentage.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            const circumference = 2 * Math.PI * 70;
+            const offset = circumference - (percentage / 100) * circumference;
+
+            gauge.style.strokeDasharray = circumference;
+            gauge.style.strokeDashoffset = offset;
+
+            let color = '#dc3545';
+            if (percentage >= 90) color = '#198754';
+            else if (percentage >= 70) color = '#0d6efd';
+            else if (percentage >= 50) color = '#ffc107';
+
+            gauge.style.stroke = color;
+            text.style.color = color;
+        });
+    </script>
+}

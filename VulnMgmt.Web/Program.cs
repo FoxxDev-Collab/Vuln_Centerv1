@@ -32,6 +32,8 @@ builder.Services.AddScoped<IScanImportService, ScanImportService>();
 builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<IStigLibraryService, StigLibraryService>();
 builder.Services.AddScoped<IStigChecklistService, StigChecklistService>();
+builder.Services.AddScoped<IMetricsService, MetricsService>();
+builder.Services.AddScoped<INistComplianceExportService, NistComplianceExportService>();
 
 // Configure authentication
 var useWindowsAuth = builder.Configuration.GetValue<bool>("Authentication:UseWindowsAuth");
