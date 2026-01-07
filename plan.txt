@@ -1,0 +1,431 @@
+# Vulnerability Management Center - Implementation Plan
+
+## Overview
+A separate .NET 8 LTS web application for managing Sites, Hosts, and Vulnerability scan data (Nessus imports). This application will provide exports that the POAMs application can ingest for STP vulnerability data.
+
+## Technology Stack
+- **Framework**: ASP.NET Core 8 MVC + Razor Pages
+- **Database**: SQLite with Entity Framework Core
+- **Authentication**: Windows Auth (AD) + Local Identity fallback
+- **Deployment**: IIS Web Deploy
+- **CSS Framework**: Bootstrap 5 (matching POAMs app styling)
+
+## Architecture Overview
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                    Vulnerability Management Center                   │
+│  ┌──────────┐    ┌──────────┐    ┌─────────────────────────────┐   │
+│  │  Sites   │───>│  Hosts   │───>│  Vulnerabilities (Nessus)   │   │
+│  └──────────┘    └──────────┘    └─────────────────────────────┘   │
+│                                              │                       │
+│                                              ▼                       │
+│                                    ┌─────────────────┐              │
+│                                    │  Export to CSV  │              │
+│                                    │  (STP Format)   │              │
+│                                    └────────┬────────┘              │
+└─────────────────────────────────────────────┼───────────────────────┘
+                                              │
+                                              ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                         POAMs Application                            │
+│                                                                      │
+│  ┌─────────────────────────────────────────────────────────────┐   │
+│  │  Import Vulnerability Export → NessusTestCase (STP)         │   │
+│  └─────────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+## Data Model
+
+### Site
+- Id, Name, Description, Location
+- OrganizationName (for grouping)
+- POCName, POCEmail, POCPhone
+- IsActive
+- CreatedDate, ModifiedDate
+- Navigation: Hosts collection
+
+### Host
+- Id, SiteId (FK)
+- DNSName, NetBIOSName (primary identifiers for matching)
+- DisplayName, Description
+- OperatingSystem, OSVersion
+- LastKnownIPAddress, LastKnownMACAddress (reference only - not for matching)
+- AssetType (Server, Workstation, Network Device, etc.)
+- AssetTag, SerialNumber
+- Status (Active, Inactive, Decommissioned, Unknown)
+- LastScanDate, LastScanVulnCount
+- CreatedDate, ModifiedDate
+- Navigation: Site, Vulnerabilities collection, ScanHistory collection
+
+### HostVulnerability
+- Id, HostId (FK)
+- PluginId, PluginName, Family
+- Severity (Critical, High, Medium, Low, Info)
+- IPAddress, Protocol, Port, MACAddress (from scan)
+- IsExploitable, ExploitFrameworks, ExploitEase
+- CVE, VulnPublicationDate
+- Synopsis, Description, Solution, SeeAlso, PluginText
+- Repository, FirstDiscovered, LastObserved
+- RemediationStatus (Open, InProgress, Remediated, Accepted, FalsePositive)
+- RemediationNotes, RemediationDate
+- ImportedDate, ImportSource (filename)
+- CreatedDate, ModifiedDate
+
+### ScanImport (tracks each Nessus import)
+- Id, SiteId (FK)
+- FileName, ImportDate
+- TotalRows, HostsCreated, HostsUpdated
+- VulnerabilitiesImported, VulnerabilitiesUpdated
+- ImportedById (FK to User)
+- Notes
+
+### User
+- Id, Username, Email, DisplayName, Phone
+- PasswordHash, Role, IsWindowsAuth, IsActive
+- CreatedDate, ModifiedDate
+
+### AuditLog
+- Id, UserId, Action, EntityType, EntityId
+- OldValues, NewValues, Timestamp, IpAddress
+
+## Role Structure
+| Role | Access Level |
+|------|--------------|
+| Admin | Super user - full system access including user management |
+| ISSM | Full access to sites, hosts, scans, imports, exports |
+| ISSO | Create/edit scans, import, export - cannot manage sites/hosts |
+| SysAdmin | View all, update remediation status |
+| Auditor | Read-only access |
+
+## Project Structure
+```
+Compliance_Tools/
+├── POAMs/                           # Existing POAMs application
+│   └── POAMs.Web/
+│
+└── VulnMgmt/                        # NEW: Vulnerability Management Center
+    ├── VulnMgmt.Web/
+    │   ├── Controllers/
+    │   │   ├── HomeController.cs         # Dashboard
+    │   │   ├── SiteController.cs         # Site CRUD
+    │   │   ├── HostController.cs         # Host CRUD
+    │   │   ├── VulnerabilityController.cs # Vuln details & remediation
+    │   │   ├── ImportController.cs       # Nessus CSV import
+    │   │   ├── ExportController.cs       # Export for POAMs
+    │   │   ├── AdminController.cs        # User management
+    │   │   └── AccountController.cs      # Auth
+    │   ├── Models/
+    │   │   ├── Domain/
+    │   │   │   ├── Site.cs
+    │   │   │   ├── Host.cs
+    │   │   │   ├── HostVulnerability.cs
+    │   │   │   ├── ScanImport.cs
+    │   │   │   ├── User.cs
+    │   │   │   ├── AuditLog.cs
+    │   │   │   └── Enums.cs
+    │   │   └── ViewModels/
+    │   ├── Views/
+    │   │   ├── Shared/
+    │   │   ├── Home/
+    │   │   ├── Site/
+    │   │   ├── Host/
+    │   │   ├── Vulnerability/
+    │   │   ├── Import/
+    │   │   ├── Export/
+    │   │   └── Admin/
+    │   ├── Services/
+    │   │   ├── ISiteService.cs / SiteService.cs
+    │   │   ├── IHostService.cs / HostService.cs
+    │   │   ├── INessusImportService.cs / NessusImportService.cs
+    │   │   ├── IExportService.cs / VulnExportService.cs
+    │   │   ├── IUserService.cs / UserService.cs
+    │   │   └── IAuditService.cs / AuditService.cs
+    │   ├── Data/
+    │   │   ├── ApplicationDbContext.cs
+    │   │   ├── DbInitializer.cs
+    │   │   └── Migrations/
+    │   ├── wwwroot/
+    │   ├── Program.cs
+    │   └── appsettings.json
+    └── VulnMgmt.sln
+```
+
+## Key Features
+
+### 1. Dashboard
+- Total Sites, Hosts, Vulnerabilities counts
+- Severity breakdown (Critical/High/Medium/Low/Info) with charts
+- Recent scan imports
+- Hosts with most critical vulnerabilities
+- Remediation progress metrics
+
+### 2. Site Management
+- CRUD for Sites
+- Site details showing all hosts with vuln counts
+- Site-level vulnerability summary
+
+### 3. Host Management
+- CRUD for Hosts (manual creation)
+- Host details with all vulnerabilities
+- Filter/sort by severity, status, date
+- Host timeline (scan history)
+
+### 4. Nessus Import
+- Upload CSV file, select target Site
+- Preview before import (shows host count, severity breakdown)
+- Options:
+  - Update existing hosts (match by DNS/NetBIOS name)
+  - Clear existing vulnerabilities before import
+  - Mark previous vulns as "Resolved" if not in new scan
+- Import history with statistics
+
+### 5. Vulnerability Management
+- View/filter all vulnerabilities across all hosts
+- Bulk update remediation status
+- Add remediation notes
+- Track remediation progress
+
+### 6. Export for POAMs Application
+**This is the key integration point**
+
+Export format options:
+- **CSV for STP Import**: Formatted to match POAMs NessusTestCase structure
+- **Excel with multiple sheets**: Summary + Details
+
+Export CSV columns (matching NessusTestCase in POAMs):
+```
+PluginId, PluginName, Family, Severity, HostName, IPAddress, Protocol, Port,
+CVE, Synopsis, Description, Solution, FirstDiscovered, LastObserved,
+IsExploitable, ExploitEase, VulnPublicationDate, RemediationStatus
+```
+
+Export options:
+- By Site (all hosts in site)
+- By Host (single host)
+- By Severity (Critical only, Critical+High, etc.)
+- Date range (vulnerabilities observed within range)
+
+## POAMs Application Changes (Minimal)
+
+### New Import Service
+**File**: `POAMs.Web/Services/IVulnImportService.cs` / `VulnImportService.cs`
+
+```csharp
+public interface IVulnImportService
+{
+    Task<ImportResult> ImportFromVulnMgmtExportAsync(Stream csvStream, int stpId);
+    Task<ImportPreview> PreviewImportAsync(Stream csvStream);
+}
+```
+
+### Updated STP Controller
+Add action to import vulnerabilities from VMC export:
+- `Import/{stpId}` - Upload CSV from Vulnerability Management Center
+- Maps to existing NessusTestCase entity
+
+### Import Flow
+1. User creates/selects STP in POAMs
+2. User uploads CSV exported from Vulnerability Management Center
+3. System creates NessusTestCase records linked to the STP
+4. Existing test cases updated if PluginId+HostName match
+
+## Implementation Phases
+
+### Phase 1: New Application Foundation [COMPLETE]
+1. [x] Create VulnMgmt solution and project
+2. [x] Set up Entity Framework Core + SQLite
+3. [x] Implement data models (Site, Host, HostVulnerability, etc.)
+4. [x] Run initial migration
+5. [x] Set up authentication (Windows Auth + Local Identity with cookies)
+6. [x] Create base layout and navigation
+
+### Phase 2: Core CRUD [COMPLETE]
+1. [x] Dashboard with statistics
+2. [x] Site CRUD
+3. [x] Host CRUD
+4. [x] Vulnerability listing and details
+5. [x] Remediation status updates
+6. [x] Admin pages for user management (matching POAMs styling)
+
+### Phase 3: Nessus Import [COMPLETE]
+1. [x] CSV parsing service (CsvHelper) - ScanImportService with NessusCsvRowMap
+2. [x] Host matching logic (DNS/NetBIOS/IP)
+3. [x] Import execution with statistics tracking
+4. [x] Import history tracking (ScanImport entity)
+5. [x] ScanImportController with Upload, Index, Details, Delete actions
+6. [x] Import views (Upload, UploadResult, Index, Details, Delete)
+
+### Phase 4: Export & Reports [COMPLETE]
+1. [x] ReportService with CSV and Excel export (ClosedXML)
+2. [x] ReportsController with VulnerabilitySummary, HostSummary, Export actions
+3. [x] Export UI with filters (site, severity, status, exploitable)
+4. [x] Quick export options for open vulnerabilities
+
+### Phase 5: STIG Library & Checklists [COMPLETE]
+**Goal: Single pane of glass for Nessus AND STIG compliance data**
+
+#### 5.1 STIG Library Data Model
+- **StigBenchmark** - The master STIG definition with versioning
+  - Id, StigId (e.g., "MS_Windows_10_STIG"), Title, Description
+  - Version, Release, BenchmarkDate, ReleaseInfo
+  - FileName, ImportDate, IsCurrentVersion
+  - Navigation: Rules collection, BenchmarkVersions
+
+- **StigBenchmarkVersion** - Tracks version history (Oct 2024 vs Jan 2025)
+  - Id, StigBenchmarkId (FK), Version, Release
+  - BenchmarkDate, ImportDate, RuleCount
+  - IsActive (current version flag)
+
+- **StigRule** - Individual STIG requirements
+  - Id, BenchmarkVersionId (FK)
+  - VulnId (V-220697), RuleId (SV-220697r991589_rule)
+  - GroupId, GroupTitle (SRG-OS-000480-GPOS-00227)
+  - Severity (CAT I/II/III → high/medium/low)
+  - RuleVersion (WN10-00-000005), RuleTitle
+  - CheckContent, FixText, Discussion
+  - CCIs, LegacyIds
+  - Navigation: Benchmark, ChecklistResults
+
+#### 5.2 STIG Checklist Data Model
+- **StigChecklist** - A point-in-time checklist for a Host
+  - Id, HostId (FK), StigBenchmarkVersionId (FK)
+  - Title, CreatedDate, LastModifiedDate
+  - CreatedById (FK), Status (Draft, InProgress, Complete)
+  - Navigation: Host, BenchmarkVersion, Results
+
+- **StigChecklistResult** - Individual rule results per checklist
+  - Id, ChecklistId (FK), StigRuleId (FK)
+  - Status (not_reviewed, open, not_a_finding, not_applicable)
+  - FindingDetails, Comments
+  - OverrideJustification, Severity override
+  - LastModifiedDate, ModifiedById
+
+#### 5.3 Implementation Tasks
+1. [x] Create STIG domain models (StigBenchmark, StigRule, etc.)
+2. [x] Create StigLibraryService for importing XCCDF XML benchmarks
+   - Parse XCCDF 1.1 format from DISA
+   - Handle zip files containing multiple XML files
+   - Version management (new import doesn't overwrite, creates new version)
+   - Mark latest version as current
+3. [x] Create StigLibraryController with CRUD operations
+   - Index (list all benchmarks with versions)
+   - Import (upload zip or XML)
+   - Details (view rules)
+   - Compare versions
+4. [x] Create STIG Library views
+5. [x] Create StigChecklistService
+   - Create checklist from benchmark for a host
+   - Import CKLB (JSON) results
+   - Export to CKLB
+6. [x] Create StigChecklistController
+   - Create checklist for host
+   - View/edit results
+   - Import results (CKLB)
+   - Export to CKLB
+7. [x] Create Checklist views
+8. [x] Add STIG navigation menu items
+9. [x] Dashboard integration (STIG compliance stats) - Future enhancement
+
+### Phase 6: POAMs Integration
+1. [ ] Add VulnImportService to POAMs
+2. [ ] Add import UI to STP controller
+3. [ ] Test end-to-end flow
+
+### Phase 7: Deployment
+1. [ ] IIS configuration
+2. [ ] Publish profiles
+3. [ ] Documentation
+
+---
+
+## STIG File Formats Reference
+
+### XCCDF Benchmark XML (from DISA)
+```xml
+<Benchmark id="MS_Windows_10_STIG">
+  <status date="2025-02-25">accepted</status>
+  <title>Microsoft Windows 10 STIG</title>
+  <plain-text id="release-info">Release: 4 Benchmark Date: 02 Apr 2025</plain-text>
+  <version>3</version>
+  <Profile id="MAC-1_Classified">...</Profile>
+  <Group id="V-220697">
+    <title>SRG-OS-000480-GPOS-00227</title>
+    <Rule id="SV-220697r991589_rule" severity="medium">
+      <version>WN10-00-000005</version>
+      <title>Domain-joined systems must use Windows 10 Enterprise Edition 64-bit version.</title>
+      <description>...</description>
+      <check><check-content>...</check-content></check>
+      <fixtext>...</fixtext>
+      <ident system="http://cyber.mil/cci">CCI-000366</ident>
+    </Rule>
+  </Group>
+</Benchmark>
+```
+
+### CKLB File (JSON - STIG Viewer export)
+```json
+{
+  "title": "Checklist Name",
+  "stigs": [{
+    "stig_name": "Microsoft Windows 10 STIG",
+    "stig_id": "MS_Windows_10_STIG",
+    "release_info": "Release: 4 Benchmark Date: 02 Apr 2025",
+    "version": "3",
+    "rules": [{
+      "group_id": "V-220697",
+      "rule_id": "SV-220697r991589_rule",
+      "severity": "medium",
+      "status": "not_reviewed|open|not_a_finding|not_applicable",
+      "finding_details": "...",
+      "comments": "..."
+    }]
+  }]
+}
+```
+
+### XCCDF Results (scan output)
+- Similar to XCCDF benchmark but with <TestResult> elements
+- Contains pass/fail status for each rule
+
+## NuGet Dependencies
+- Microsoft.EntityFrameworkCore.Sqlite (8.0.*)
+- Microsoft.EntityFrameworkCore.Tools (8.0.*)
+- Microsoft.AspNetCore.Authentication.Negotiate (8.0.*)
+- CsvHelper (31.*)
+- ClosedXML (0.102.*) - for Excel exports
+- Serilog.AspNetCore (8.*)
+
+## Getting Started Commands
+
+```bash
+# Create new solution
+cd c:\Users\jeremiah.price\Documents\3. Local-Dev\Compliance_Tools
+mkdir VulnMgmt
+cd VulnMgmt
+dotnet new sln -n VulnMgmt
+dotnet new mvc -n VulnMgmt.Web
+dotnet sln add VulnMgmt.Web
+
+# Add packages
+cd VulnMgmt.Web
+dotnet add package Microsoft.EntityFrameworkCore.Sqlite
+dotnet add package Microsoft.EntityFrameworkCore.Tools
+dotnet add package Microsoft.AspNetCore.Authentication.Negotiate
+dotnet add package CsvHelper
+dotnet add package ClosedXML
+dotnet add package Serilog.AspNetCore
+```
+
+## Test Data
+- Sample Nessus CSV: `POAMs/nessus_examples/nessus_test.csv`
+
+## Benefits of Separate Application
+
+1. **Separation of Concerns**: Vulnerability scanning/tracking is operationally different from compliance/POAMs
+2. **Independent Scaling**: VMC may have many more hosts/vulns than POAMs entries
+3. **Different User Base**: Security analysts vs compliance officers
+4. **Simpler POAMs App**: POAMs stays focused on compliance tracking
+5. **Flexible Integration**: Export format can evolve independently
+6. **Database Isolation**: Large vuln data doesn't bloat POAMs database

@@ -1,0 +1,63 @@
+@model VulnMgmt.Web.Models.Domain.Host
+@{
+    ViewData["Title"] = "Delete Host";
+}
+
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-action="Index">Hosts</a></li>
+        <li class="breadcrumb-item"><a asp-action="Details" asp-route-id="@Model.Id">@(Model.DisplayName ?? Model.DNSName ?? "Host")</a></li>
+        <li class="breadcrumb-item active">Delete</li>
+    </ol>
+</nav>
+
+<h1 class="mb-4 text-danger"><i class="bi bi-trash me-2"></i>Delete Host</h1>
+
+<div class="row">
+    <div class="col-lg-6">
+        <div class="alert alert-danger">
+            <h5 class="alert-heading"><i class="bi bi-exclamation-triangle me-1"></i>Warning</h5>
+            <p>You are about to delete the host <strong>@(Model.DisplayName ?? Model.DNSName ?? Model.NetBIOSName ?? "Unknown")</strong>.</p>
+            <hr>
+            <p class="mb-0">
+                This will also delete <strong>@Model.Vulnerabilities.Count vulnerability record(s)</strong>.
+                This action cannot be undone.
+            </p>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">Host Details</div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Display Name</dt>
+                    <dd class="col-sm-8">@(Model.DisplayName ?? "-")</dd>
+
+                    <dt class="col-sm-4">DNS Name</dt>
+                    <dd class="col-sm-8">@(Model.DNSName ?? "-")</dd>
+
+                    <dt class="col-sm-4">IP Address</dt>
+                    <dd class="col-sm-8">@(Model.LastKnownIPAddress ?? "-")</dd>
+
+                    <dt class="col-sm-4">Site</dt>
+                    <dd class="col-sm-8">@Model.Site?.Name</dd>
+
+                    <dt class="col-sm-4">Vulnerabilities</dt>
+                    <dd class="col-sm-8">@Model.Vulnerabilities.Count</dd>
+
+                    <dt class="col-sm-4">Created</dt>
+                    <dd class="col-sm-8">@Model.CreatedDate.ToString("MM/dd/yyyy")</dd>
+                </dl>
+            </div>
+        </div>
+
+        <form asp-action="Delete" method="post">
+            <input type="hidden" name="id" value="@Model.Id" />
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-danger">
+                    <i class="bi bi-trash me-1"></i>Yes, Delete Host
+                </button>
+                <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>

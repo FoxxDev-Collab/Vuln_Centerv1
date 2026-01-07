@@ -1,0 +1,145 @@
+@model VulnMgmt.Web.Models.ViewModels.SiteListViewModel
+@{
+    ViewData["Title"] = "Sites";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="bi bi-building me-2"></i>Sites</h1>
+    @if (User.IsInRole("Admin") || User.IsInRole("ISSM"))
+    {
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-1"></i>Add Site
+        </a>
+    }
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle me-1"></i>@TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (!Model.Sites.Any())
+{
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle me-1"></i>No sites configured yet.
+        @if (User.IsInRole("Admin") || User.IsInRole("ISSM"))
+        {
+            <a asp-action="Create">Create your first site</a>
+        }
+    </div>
+}
+else
+{
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Name</th>
+                            <th>Organization</th>
+                            <th>Location</th>
+                            <th class="text-center">Hosts</th>
+                            <th class="text-center">Open Vulns</th>
+                            <th class="text-center">Critical/High</th>
+                            <th class="text-center">STIG Checklists</th>
+                            <th class="text-center">STIG Open</th>
+                            <th>Last Scan</th>
+                            <th class="text-center">Status</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var site in Model.Sites)
+                        {
+                            <tr>
+                                <td>
+                                    <a asp-action="Details" asp-route-id="@site.Id" class="fw-semibold text-decoration-none">
+                                        @site.Name
+                                    </a>
+                                </td>
+                                <td>@(site.OrganizationName ?? "-")</td>
+                                <td>@(site.Location ?? "-")</td>
+                                <td class="text-center">@site.HostCount</td>
+                                <td class="text-center">
+                                    @if (site.VulnCount > 0)
+                                    {
+                                        <span class="badge bg-warning text-dark">@site.VulnCount</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">0</span>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    @if (site.CriticalHighCount > 0)
+                                    {
+                                        <span class="badge bg-danger">@site.CriticalHighCount</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">0</span>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    @if (site.StigChecklistCount > 0)
+                                    {
+                                        <span class="badge bg-info">@site.StigChecklistCount</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">0</span>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    @if (site.StigOpenCount > 0)
+                                    {
+                                        <span class="badge bg-warning text-dark">@site.StigOpenCount</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">0</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (site.LastScanDate.HasValue)
+                                    {
+                                        @site.LastScanDate.Value.ToString("MM/dd/yyyy")
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Never</span>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    @if (site.IsActive)
+                                    {
+                                        <span class="badge bg-success">Active</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Inactive</span>
+                                    }
+                                </td>
+                                <td class="text-end">
+                                    <a asp-action="Details" asp-route-id="@site.Id" class="btn btn-sm btn-outline-primary" title="View Details">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    @if (User.IsInRole("Admin") || User.IsInRole("ISSM"))
+                                    {
+                                        <a asp-action="Edit" asp-route-id="@site.Id" class="btn btn-sm btn-outline-secondary" title="Edit">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+}

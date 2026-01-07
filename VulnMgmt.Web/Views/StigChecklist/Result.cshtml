@@ -1,0 +1,167 @@
+@model VulnMgmt.Web.Models.Domain.StigChecklistResult
+@{
+    ViewData["Title"] = $"{Model.StigRule.VulnId} - Result";
+    var sevClass = Model.StigRule.Severity switch
+    {
+        VulnMgmt.Web.Models.Domain.StigSeverity.High => "bg-danger",
+        VulnMgmt.Web.Models.Domain.StigSeverity.Medium => "bg-warning text-dark",
+        VulnMgmt.Web.Models.Domain.StigSeverity.Low => "bg-info",
+        _ => "bg-secondary"
+    };
+    var catLabel = Model.StigRule.Severity switch
+    {
+        VulnMgmt.Web.Models.Domain.StigSeverity.High => "CAT I (High)",
+        VulnMgmt.Web.Models.Domain.StigSeverity.Medium => "CAT II (Medium)",
+        VulnMgmt.Web.Models.Domain.StigSeverity.Low => "CAT III (Low)",
+        _ => "Unknown"
+    };
+}
+
+<div class="mb-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-1">
+            <li class="breadcrumb-item"><a asp-action="Index">Checklists</a></li>
+            <li class="breadcrumb-item"><a asp-action="Details" asp-route-id="@Model.ChecklistId">@(Model.Checklist?.Title ?? "Checklist")</a></li>
+            <li class="breadcrumb-item active">@Model.StigRule.VulnId</li>
+        </ol>
+    </nav>
+    <div class="d-flex justify-content-between align-items-start">
+        <div>
+            <h1 class="h3">
+                <span class="badge @sevClass me-2">@catLabel</span>
+                @Model.StigRule.VulnId
+            </h1>
+            <p class="text-muted mb-0">@Model.StigRule.RuleTitle</p>
+        </div>
+    </div>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle me-1"></i>@TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-shield-exclamation me-2"></i>Vulnerability Details
+            </div>
+            <div class="card-body">
+                <h6>Discussion</h6>
+                <div class="border rounded p-3 bg-light mb-4" style="white-space: pre-wrap; max-height: 300px; overflow-y: auto;">@(Model.StigRule.Discussion ?? "No discussion available.")</div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-clipboard-check me-2"></i>Check Content
+            </div>
+            <div class="card-body">
+                <div class="border rounded p-3 bg-light" style="white-space: pre-wrap; max-height: 400px; overflow-y: auto;">@(Model.StigRule.CheckContent ?? "No check content available.")</div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-tools me-2"></i>Fix Text
+            </div>
+            <div class="card-body">
+                <div class="border rounded p-3 bg-light" style="white-space: pre-wrap; max-height: 300px; overflow-y: auto;">@(Model.StigRule.FixText ?? "No fix text available.")</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card mb-4 border-primary">
+            <div class="card-header bg-primary text-white">
+                <i class="bi bi-pencil-square me-2"></i>Update Result
+            </div>
+            <div class="card-body">
+                <form asp-action="UpdateResult" method="post">
+                    <input type="hidden" name="id" value="@Model.Id" />
+
+                    <div class="mb-3">
+                        <label for="status" class="form-label">Status <span class="text-danger">*</span></label>
+                        <select name="status" id="status" class="form-select" required>
+                            <option value="@VulnMgmt.Web.Models.Domain.StigResultStatus.NotReviewed" selected="@(Model.Status == VulnMgmt.Web.Models.Domain.StigResultStatus.NotReviewed)">Not Reviewed</option>
+                            <option value="@VulnMgmt.Web.Models.Domain.StigResultStatus.Open" selected="@(Model.Status == VulnMgmt.Web.Models.Domain.StigResultStatus.Open)">Open</option>
+                            <option value="@VulnMgmt.Web.Models.Domain.StigResultStatus.NotAFinding" selected="@(Model.Status == VulnMgmt.Web.Models.Domain.StigResultStatus.NotAFinding)">Not a Finding</option>
+                            <option value="@VulnMgmt.Web.Models.Domain.StigResultStatus.NotApplicable" selected="@(Model.Status == VulnMgmt.Web.Models.Domain.StigResultStatus.NotApplicable)">Not Applicable</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="findingDetails" class="form-label">Finding Details</label>
+                        <textarea name="findingDetails" id="findingDetails" class="form-control" rows="5"
+                                  placeholder="Enter finding details, evidence, observations...">@Model.FindingDetails</textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="comments" class="form-label">Comments</label>
+                        <textarea name="comments" id="comments" class="form-control" rows="3"
+                                  placeholder="Additional comments...">@Model.Comments</textarea>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg me-2"></i>Save Result
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-info-square me-2"></i>Rule Information
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0 small">
+                    <dt class="col-sm-5">Vuln ID</dt>
+                    <dd class="col-sm-7"><code>@Model.StigRule.VulnId</code></dd>
+
+                    <dt class="col-sm-5">Rule ID</dt>
+                    <dd class="col-sm-7"><code class="small">@Model.StigRule.RuleId</code></dd>
+
+                    @if (!string.IsNullOrEmpty(Model.StigRule.RuleVersion))
+                    {
+                        <dt class="col-sm-5">Rule Version</dt>
+                        <dd class="col-sm-7"><code>@Model.StigRule.RuleVersion</code></dd>
+                    }
+
+                    <dt class="col-sm-5">Severity</dt>
+                    <dd class="col-sm-7"><span class="badge @sevClass">@catLabel</span></dd>
+                </dl>
+            </div>
+        </div>
+
+        @if (!string.IsNullOrEmpty(Model.StigRule.CCIs))
+        {
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-link-45deg me-2"></i>CCIs
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0 small">
+                        @foreach (var cci in Model.StigRule.CCIs.Split(',').Take(5))
+                        {
+                            <li><code>@cci.Trim()</code></li>
+                        }
+                        @if (Model.StigRule.CCIs.Split(',').Length > 5)
+                        {
+                            <li class="text-muted">... and @(Model.StigRule.CCIs.Split(',').Length - 5) more</li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<a asp-action="Details" asp-route-id="@Model.ChecklistId" class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-left me-2"></i>Back to Checklist
+</a>

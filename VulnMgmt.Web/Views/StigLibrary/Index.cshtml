@@ -1,0 +1,163 @@
+@model IEnumerable<VulnMgmt.Web.Models.Domain.StigBenchmark>
+@{
+    ViewData["Title"] = "STIG Library";
+    var stats = ViewBag.Stats as VulnMgmt.Web.Services.StigLibraryStats;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="bi bi-journal-bookmark me-2"></i>STIG Library</h1>
+    @if (User.IsInRole("Admin") || User.IsInRole("ISSM"))
+    {
+        <a asp-action="Import" class="btn btn-primary">
+            <i class="bi bi-upload me-1"></i>Import STIG
+        </a>
+    }
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle me-1"></i>@TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle me-1"></i>@TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (stats != null)
+{
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="h2 mb-0 text-primary">@stats.TotalBenchmarks</div>
+                    <small class="text-muted">Benchmarks</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="h2 mb-0 text-info">@stats.TotalVersions</div>
+                    <small class="text-muted">Versions</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="h2 mb-0 text-secondary">@stats.TotalRules.ToString("N0")</div>
+                    <small class="text-muted">Total Rules</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="h2 mb-0 text-success">@stats.TotalChecklists</div>
+                    <small class="text-muted">Checklists</small>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle me-1"></i>No STIG benchmarks in the library yet.
+        @if (User.IsInRole("Admin") || User.IsInRole("ISSM"))
+        {
+            <a asp-action="Import">Import your first STIG</a>
+        }
+    </div>
+}
+else
+{
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>STIG Name</th>
+                            <th>STIG ID</th>
+                            <th class="text-center">Current Version</th>
+                            <th class="text-center">Release</th>
+                            <th class="text-center">Rules</th>
+                            <th class="text-center">Versions</th>
+                            <th>Last Updated</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var benchmark in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <a asp-action="Details" asp-route-id="@benchmark.Id" class="fw-semibold text-decoration-none">
+                                        @benchmark.Title
+                                    </a>
+                                </td>
+                                <td><code>@benchmark.StigId</code></td>
+                                <td class="text-center">
+                                    @if (benchmark.CurrentVersion != null)
+                                    {
+                                        <span class="badge bg-primary">V@(benchmark.CurrentVersion.Version)</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    @if (benchmark.CurrentVersion?.Release != null)
+                                    {
+                                        <span>R@(benchmark.CurrentVersion.Release)</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    @(benchmark.CurrentVersion?.RuleCount ?? 0)
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-secondary">@benchmark.Versions.Count</span>
+                                </td>
+                                <td>
+                                    @if (benchmark.CurrentVersion?.BenchmarkDate != null)
+                                    {
+                                        @benchmark.CurrentVersion.BenchmarkDate.Value.ToString("MMM yyyy")
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                                <td class="text-end">
+                                    <a asp-action="Details" asp-route-id="@benchmark.Id" class="btn btn-sm btn-outline-primary" title="View Details">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    @if (benchmark.CurrentVersion != null)
+                                    {
+                                        <a asp-action="Version" asp-route-id="@benchmark.CurrentVersion.Id" class="btn btn-sm btn-outline-secondary" title="View Rules">
+                                            <i class="bi bi-list-check"></i>
+                                        </a>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+}

@@ -1,0 +1,172 @@
+@model VulnMgmt.Web.Models.Domain.StigBenchmarkVersion
+@{
+    ViewData["Title"] = $"{Model.StigBenchmark.Title} - V{Model.Version}R{Model.Release}";
+    var rules = ViewBag.Rules as List<VulnMgmt.Web.Models.Domain.StigRule>;
+    var search = ViewBag.Search as string;
+    var severity = ViewBag.Severity as VulnMgmt.Web.Models.Domain.StigSeverity?;
+    var currentPage = (int)ViewBag.CurrentPage;
+    var totalPages = (int)ViewBag.TotalPages;
+    var totalRules = (int)ViewBag.TotalRules;
+}
+
+<div class="mb-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-1">
+            <li class="breadcrumb-item"><a asp-action="Index">STIG Library</a></li>
+            <li class="breadcrumb-item"><a asp-action="Details" asp-route-id="@Model.StigBenchmarkId">@Model.StigBenchmark.Title</a></li>
+            <li class="breadcrumb-item active">V@(Model.Version)R@(Model.Release)</li>
+        </ol>
+    </nav>
+    <div class="d-flex justify-content-between align-items-start">
+        <div>
+            <h1 class="h3"><i class="bi bi-list-check me-2"></i>@Model.StigBenchmark.Title</h1>
+            <p class="text-muted mb-0">
+                <span class="badge bg-primary">V@(Model.Version)</span>
+                @if (Model.Release != null)
+                {
+                    <span class="badge bg-secondary">R@(Model.Release)</span>
+                }
+                @if (Model.IsActive)
+                {
+                    <span class="badge bg-success ms-1">Current</span>
+                }
+                <span class="ms-2">|</span>
+                <span class="ms-2">@Model.RuleCount rules</span>
+                @if (Model.BenchmarkDate.HasValue)
+                {
+                    <span class="ms-2">|</span>
+                    <span class="ms-2">@Model.BenchmarkDate.Value.ToString("dd MMM yyyy")</span>
+                }
+            </p>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <i class="bi bi-funnel me-2"></i>Filter Rules
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label">Search</label>
+                <input type="text" name="search" class="form-control" value="@search"
+                       placeholder="Search by Vuln ID, Rule ID, Title, CCI...">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Severity</label>
+                <select name="severity" class="form-select">
+                    <option value="">All Severities</option>
+                    <option value="@VulnMgmt.Web.Models.Domain.StigSeverity.High" selected="@(severity == VulnMgmt.Web.Models.Domain.StigSeverity.High)">CAT I (High)</option>
+                    <option value="@VulnMgmt.Web.Models.Domain.StigSeverity.Medium" selected="@(severity == VulnMgmt.Web.Models.Domain.StigSeverity.Medium)">CAT II (Medium)</option>
+                    <option value="@VulnMgmt.Web.Models.Domain.StigSeverity.Low" selected="@(severity == VulnMgmt.Web.Models.Domain.StigSeverity.Low)">CAT III (Low)</option>
+                </select>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-search me-1"></i>Filter
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-shield-check me-2"></i>Rules</span>
+        <span class="badge bg-secondary">Showing @rules?.Count of @totalRules</span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 120px;">Vuln ID</th>
+                        <th style="width: 130px;">Rule Version</th>
+                        <th class="text-center" style="width: 90px;">Severity</th>
+                        <th>Title</th>
+                        <th style="width: 150px;">CCIs</th>
+                        <th style="width: 70px;"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (rules != null)
+                    {
+                        @foreach (var rule in rules)
+                        {
+                            <tr>
+                                <td>
+                                    <a asp-action="Rule" asp-route-id="@rule.Id" class="text-decoration-none fw-semibold">
+                                        @rule.VulnId
+                                    </a>
+                                </td>
+                                <td><code>@rule.RuleVersion</code></td>
+                                <td class="text-center">
+                                    @{
+                                        var sevClass = rule.Severity switch
+                                        {
+                                            VulnMgmt.Web.Models.Domain.StigSeverity.High => "bg-danger",
+                                            VulnMgmt.Web.Models.Domain.StigSeverity.Medium => "bg-warning text-dark",
+                                            VulnMgmt.Web.Models.Domain.StigSeverity.Low => "bg-info",
+                                            _ => "bg-secondary"
+                                        };
+                                        var catLabel = rule.Severity switch
+                                        {
+                                            VulnMgmt.Web.Models.Domain.StigSeverity.High => "CAT I",
+                                            VulnMgmt.Web.Models.Domain.StigSeverity.Medium => "CAT II",
+                                            VulnMgmt.Web.Models.Domain.StigSeverity.Low => "CAT III",
+                                            _ => "?"
+                                        };
+                                    }
+                                    <span class="badge @sevClass">@catLabel</span>
+                                </td>
+                                <td>
+                                    <span title="@rule.RuleTitle">
+                                        @(rule.RuleTitle.Length > 80 ? rule.RuleTitle.Substring(0, 80) + "..." : rule.RuleTitle)
+                                    </span>
+                                </td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(rule.CCIs))
+                                    {
+                                        var cciList = rule.CCIs.Split(',').Take(2);
+                                        <small class="text-muted">@string.Join(", ", cciList)@(rule.CCIs.Split(',').Length > 2 ? "..." : "")</small>
+                                    }
+                                </td>
+                                <td class="text-end">
+                                    <a asp-action="Rule" asp-route-id="@rule.Id" class="btn btn-sm btn-outline-primary" title="View Rule">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+    @if (totalPages > 1)
+    {
+        <div class="card-footer">
+            <nav aria-label="Rules pagination">
+                <ul class="pagination pagination-sm justify-content-center mb-0">
+                    <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                        <a class="page-link" asp-route-page="@(currentPage - 1)" asp-route-search="@search" asp-route-severity="@severity">Previous</a>
+                    </li>
+                    @for (int i = Math.Max(1, currentPage - 2); i <= Math.Min(totalPages, currentPage + 2); i++)
+                    {
+                        <li class="page-item @(i == currentPage ? "active" : "")">
+                            <a class="page-link" asp-route-page="@i" asp-route-search="@search" asp-route-severity="@severity">@i</a>
+                        </li>
+                    }
+                    <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                        <a class="page-link" asp-route-page="@(currentPage + 1)" asp-route-search="@search" asp-route-severity="@severity">Next</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    }
+</div>
+
+<a asp-action="Details" asp-route-id="@Model.StigBenchmarkId" class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-left me-2"></i>Back to Benchmark
+</a>

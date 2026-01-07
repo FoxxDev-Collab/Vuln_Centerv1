@@ -1,0 +1,238 @@
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="bi bi-speedometer2 me-2"></i>Dashboard</h1>
+    <span class="text-muted">@DateTime.Now.ToString("dddd, MMMM d, yyyy")</span>
+</div>
+
+@if (User.Identity?.IsAuthenticated != true)
+{
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle me-2"></i>Please <a asp-controller="Account" asp-action="Login">login</a> to access vulnerability data.
+    </div>
+}
+else
+{
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-subtitle mb-1 text-white-50">Total Sites</h6>
+                            <h2 class="card-title mb-0">@(ViewBag.TotalSites ?? 0)</h2>
+                        </div>
+                        <i class="bi bi-building display-4 opacity-50"></i>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent border-0">
+                    <a asp-controller="Site" asp-action="Index" class="text-white text-decoration-none small">
+                        View Sites <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-subtitle mb-1 text-white-50">Total Hosts</h6>
+                            <h2 class="card-title mb-0">@(ViewBag.TotalHosts ?? 0)</h2>
+                        </div>
+                        <i class="bi bi-pc-display display-4 opacity-50"></i>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent border-0">
+                    <a asp-controller="Host" asp-action="Index" class="text-white text-decoration-none small">
+                        View Hosts <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-subtitle mb-1 text-dark-50">Open Vulnerabilities</h6>
+                            <h2 class="card-title mb-0">@(ViewBag.OpenVulns ?? 0)</h2>
+                        </div>
+                        <i class="bi bi-bug display-4 opacity-50"></i>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent border-0">
+                    <a asp-controller="Vulnerability" asp-action="Index" class="text-dark text-decoration-none small">
+                        View All <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-danger text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-subtitle mb-1 text-white-50">Critical/High</h6>
+                            <h2 class="card-title mb-0">@(ViewBag.CriticalHighVulns ?? 0)</h2>
+                        </div>
+                        <i class="bi bi-exclamation-triangle display-4 opacity-50"></i>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent border-0">
+                    <a asp-controller="Vulnerability" asp-action="Index" asp-route-severity="Critical,High" class="text-white text-decoration-none small">
+                        View Critical/High <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-secondary text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-subtitle mb-1 text-white-50">STIG Checklists</h6>
+                            <h2 class="card-title mb-0">@(ViewBag.TotalStigChecklists ?? 0)</h2>
+                        </div>
+                        <i class="bi bi-clipboard-check display-4 opacity-50"></i>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent border-0">
+                    <a asp-controller="StigChecklist" asp-action="Index" class="text-white text-decoration-none small">
+                        View Checklists <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-subtitle mb-1 text-dark-50">STIG Open Findings</h6>
+                            <h2 class="card-title mb-0">@(ViewBag.StigOpenFindings ?? 0)</h2>
+                        </div>
+                        <i class="bi bi-exclamation-circle display-4 opacity-50"></i>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent border-0">
+                    <a asp-controller="StigChecklist" asp-action="Index" class="text-dark text-decoration-none small">
+                        View Open <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-light text-dark h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-subtitle mb-1 text-dark-50">STIG Not Reviewed</h6>
+                            <h2 class="card-title mb-0">@(ViewBag.StigNotReviewedCount ?? 0)</h2>
+                        </div>
+                        <i class="bi bi-question-circle display-4 opacity-50"></i>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent border-0">
+                    <span class="text-muted small">Pending review</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-subtitle mb-1 text-white-50">STIG Compliant</h6>
+                            <h2 class="card-title mb-0">@(ViewBag.StigNotAFindingCount ?? 0)</h2>
+                        </div>
+                        <i class="bi bi-check-circle display-4 opacity-50"></i>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent border-0">
+                    <span class="text-white-50 small">Not a Finding + N/A: @(ViewBag.StigNotApplicableCount ?? 0)</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-pie-chart me-1"></i>Vulnerabilities by Severity
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm mb-0">
+                            <tbody>
+                                <tr>
+                                    <td><span class="badge bg-danger">Critical</span></td>
+                                    <td class="text-end">@(ViewBag.CriticalCount ?? 0)</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge bg-warning text-dark">High</span></td>
+                                    <td class="text-end">@(ViewBag.HighCount ?? 0)</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge bg-info">Medium</span></td>
+                                    <td class="text-end">@(ViewBag.MediumCount ?? 0)</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge bg-success">Low</span></td>
+                                    <td class="text-end">@(ViewBag.LowCount ?? 0)</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge bg-secondary">Info</span></td>
+                                    <td class="text-end">@(ViewBag.InfoCount ?? 0)</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-clock-history me-1"></i>Recent Scan Imports
+                </div>
+                <div class="card-body">
+                    @if (ViewBag.RecentImports != null && ((IEnumerable<dynamic>)ViewBag.RecentImports).Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-sm mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Site</th>
+                                        <th>Vulns</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var import in ViewBag.RecentImports)
+                                    {
+                                        <tr>
+                                            <td>@import.ImportDate.ToString("MM/dd/yy")</td>
+                                            <td>@import.SiteName</td>
+                                            <td>@import.VulnerabilitiesImported</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted mb-0">No imports yet. <a asp-controller="ScanImport" asp-action="Upload">Import a Nessus scan</a> to get started.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}

@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dotnet new:*)",
+      "Bash(dotnet sln add:*)",
+      "Bash(dotnet add package:*)",
+      "Bash(dotnet ef:*)",
+      "Bash(dotnet build:*)",
+      "Bash(move \"c:\\\\Users\\\\jeremiah.price\\\\Documents\\\\3. Local-Dev\\\\Compliance_Tools\\\\Vuln_Center\\\\VulnMgmt.Web\\\\Views\\\\Admin\\\\Index.cshtml\" \"c:\\\\Users\\\\jeremiah.price\\\\Documents\\\\3. Local-Dev\\\\Compliance_Tools\\\\Vuln_Center\\\\VulnMgmt.Web\\\\Views\\\\Admin\\\\Users.cshtml\")",
+      "Bash(cmd /c move:*)",
+      "Bash(dir:*)",
+      "Bash(powershell -Command \"Expand-Archive -Path ''U_Adobe_Acrobat_Reader_DC_Continuous_V2R1_STIG.zip'' -DestinationPath ''temp_adobe'' -Force; Get-ChildItem -Path ''temp_adobe'' -Recurse | Select-Object FullName\":*)",
+      "Bash(powershell -Command:*)",
+      "Bash(cd:*)",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(head:*)"
+    ]
+  }
+}

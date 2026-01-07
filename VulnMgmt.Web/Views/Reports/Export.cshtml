@@ -1,0 +1,171 @@
+@model VulnMgmt.Web.Models.ViewModels.ExportViewModel
+@{
+    ViewData["Title"] = "Export Data";
+}
+
+<div class="mb-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-1">
+            <li class="breadcrumb-item"><a asp-action="Index">Reports</a></li>
+            <li class="breadcrumb-item active">Export</li>
+        </ol>
+    </nav>
+    <h1 class="h3"><i class="bi bi-download me-2"></i>Export Vulnerability Data</h1>
+</div>
+
+<div class="row">
+    <div class="col-lg-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-funnel me-2"></i>Export Filters
+            </div>
+            <div class="card-body">
+                <form id="exportForm">
+                    <div class="mb-3">
+                        <label asp-for="SiteId" class="form-label"></label>
+                        <select asp-for="SiteId" class="form-select">
+                            <option value="">All Sites</option>
+                            @foreach (var site in Model.AvailableSites)
+                            {
+                                <option value="@site.Id">@site.Name</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="MinimumSeverity" class="form-label"></label>
+                        <select asp-for="MinimumSeverity" class="form-select">
+                            <option value="">All Severities</option>
+                            <option value="@VulnMgmt.Web.Models.Domain.Severity.Critical">Critical Only</option>
+                            <option value="@VulnMgmt.Web.Models.Domain.Severity.High">High and Above</option>
+                            <option value="@VulnMgmt.Web.Models.Domain.Severity.Medium">Medium and Above</option>
+                            <option value="@VulnMgmt.Web.Models.Domain.Severity.Low">Low and Above</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Status" class="form-label"></label>
+                        <select asp-for="Status" class="form-select">
+                            <option value="">All Statuses</option>
+                            <option value="@VulnMgmt.Web.Models.Domain.RemediationStatus.Open">Open</option>
+                            <option value="@VulnMgmt.Web.Models.Domain.RemediationStatus.InProgress">In Progress</option>
+                            <option value="@VulnMgmt.Web.Models.Domain.RemediationStatus.Remediated">Remediated</option>
+                            <option value="@VulnMgmt.Web.Models.Domain.RemediationStatus.Accepted">Accepted</option>
+                            <option value="@VulnMgmt.Web.Models.Domain.RemediationStatus.FalsePositive">False Positive</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input asp-for="ExploitableOnly" class="form-check-input" type="checkbox" />
+                            <label asp-for="ExploitableOnly" class="form-check-label"></label>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input asp-for="IncludeRemediated" class="form-check-input" type="checkbox" />
+                            <label asp-for="IncludeRemediated" class="form-check-label"></label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-file-earmark-arrow-down me-2"></i>Export Format
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button type="button" class="btn btn-success btn-lg" onclick="exportData('excel')">
+                        <i class="bi bi-file-earmark-excel me-2"></i>Export as Excel (.xlsx)
+                    </button>
+                    <button type="button" class="btn btn-outline-success btn-lg" onclick="exportData('csv')">
+                        <i class="bi bi-file-earmark-text me-2"></i>Export as CSV (.csv)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-info-circle me-2"></i>Export Information
+            </div>
+            <div class="card-body">
+                <h6>Included Columns</h6>
+                <ul class="small">
+                    <li>Plugin ID, Plugin Name</li>
+                    <li>Severity</li>
+                    <li>Host, IP Address, Port, Protocol</li>
+                    <li>CVE</li>
+                    <li>Synopsis, Solution</li>
+                    <li>Exploitable status</li>
+                    <li>Remediation Status</li>
+                    <li>First Discovered, Last Observed dates</li>
+                    <li>Site</li>
+                </ul>
+
+                <div class="alert alert-info small mb-0">
+                    <i class="bi bi-lightbulb me-2"></i>
+                    <strong>Tip:</strong> Use the filters to narrow down the export. By default, remediated and false positive vulnerabilities are excluded.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function exportData(format) {
+            var form = document.getElementById('exportForm');
+            var formData = new FormData(form);
+
+            var newForm = document.createElement('form');
+            newForm.method = 'POST';
+            newForm.action = format === 'excel' ? '@Url.Action("ExportExcel")' : '@Url.Action("ExportCsv")';
+
+            // Add anti-forgery token
+            var token = document.querySelector('input[name="__RequestVerificationToken"]');
+            if (token) {
+                var tokenInput = document.createElement('input');
+                tokenInput.type = 'hidden';
+                tokenInput.name = '__RequestVerificationToken';
+                tokenInput.value = token.value;
+                newForm.appendChild(tokenInput);
+            }
+
+            // Add form fields
+            for (var pair of formData.entries()) {
+                var input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = pair[0];
+                input.value = pair[1];
+                newForm.appendChild(input);
+            }
+
+            // Add checkboxes that are unchecked
+            if (!document.getElementById('ExploitableOnly').checked) {
+                var input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'ExploitableOnly';
+                input.value = 'false';
+                newForm.appendChild(input);
+            }
+            if (!document.getElementById('IncludeRemediated').checked) {
+                var input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'IncludeRemediated';
+                input.value = 'false';
+                newForm.appendChild(input);
+            }
+
+            document.body.appendChild(newForm);
+            newForm.submit();
+            document.body.removeChild(newForm);
+        }
+    </script>
+    @Html.AntiForgeryToken()
+}

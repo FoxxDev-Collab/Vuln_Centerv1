@@ -1,0 +1,232 @@
+@model VulnMgmt.Web.Models.ViewModels.HostIndexViewModel
+@{
+    ViewData["Title"] = Model.SiteName != null ? $"Hosts - {Model.SiteName}" : "All Hosts";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1><i class="bi bi-pc-display me-2"></i>@ViewData["Title"]</h1>
+        @if (Model.SiteId.HasValue)
+        {
+            <a asp-controller="Site" asp-action="Details" asp-route-id="@Model.SiteId" class="text-muted">
+                <i class="bi bi-arrow-left me-1"></i>Back to @Model.SiteName
+            </a>
+        }
+    </div>
+    @if (User.IsInRole("Admin") || User.IsInRole("ISSM"))
+    {
+        <a asp-action="Create" asp-route-siteId="@Model.SiteId" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-1"></i>Add Host
+        </a>
+    }
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle me-1"></i>@TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            @if (Model.SiteId.HasValue)
+            {
+                <input type="hidden" name="siteId" value="@Model.SiteId" />
+            }
+            <div class="col-md-4">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" name="search" class="form-control" placeholder="Search hosts..." value="@Model.SearchTerm" />
+                </div>
+            </div>
+            <div class="col-md-3">
+                <select name="status" class="form-select">
+                    <option value="">All Statuses</option>
+                    @foreach (var status in Enum.GetValues<VulnMgmt.Web.Models.Domain.HostStatus>())
+                    {
+                        <option value="@status" selected="@(Model.StatusFilter == status)">@status</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-outline-primary w-100">Filter</button>
+            </div>
+            @if (!string.IsNullOrEmpty(Model.SearchTerm) || Model.StatusFilter.HasValue)
+            {
+                <div class="col-md-2">
+                    <a asp-action="Index" asp-route-siteId="@Model.SiteId" class="btn btn-outline-secondary w-100">Clear</a>
+                </div>
+            }
+        </form>
+    </div>
+</div>
+
+@if (!Model.Hosts.Any())
+{
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle me-1"></i>No hosts found.
+        @if (User.IsInRole("Admin") || User.IsInRole("ISSM"))
+        {
+            <a asp-action="Create" asp-route-siteId="@Model.SiteId">Add a host</a>
+        }
+    </div>
+}
+else
+{
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Host</th>
+                            <th>DNS Name / IP</th>
+                            @if (!Model.SiteId.HasValue)
+                            {
+                                <th>Site</th>
+                            }
+                            <th>OS</th>
+                            <th class="text-center">Type</th>
+                            <th class="text-center">Status</th>
+                            <th class="text-center">Vulns</th>
+                            <th class="text-center">Crit</th>
+                            <th class="text-center">High</th>
+                            <th class="text-center">STIGs</th>
+                            <th class="text-center">STIG Open</th>
+                            <th>Last Scan</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var host in Model.Hosts)
+                        {
+                            <tr>
+                                <td>
+                                    <a asp-action="Details" asp-route-id="@host.Id" class="fw-semibold text-decoration-none">
+                                        @host.DisplayName
+                                    </a>
+                                </td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(host.DNSName))
+                                    {
+                                        <code class="small">@host.DNSName</code>
+                                    }
+                                    @if (!string.IsNullOrEmpty(host.LastKnownIPAddress))
+                                    {
+                                        <br /><small class="text-muted">@host.LastKnownIPAddress</small>
+                                    }
+                                </td>
+                                @if (!Model.SiteId.HasValue)
+                                {
+                                    <td>
+                                        <a asp-controller="Site" asp-action="Details" asp-route-id="@host.SiteId" class="text-decoration-none">
+                                            @host.SiteName
+                                        </a>
+                                    </td>
+                                }
+                                <td class="small">@(host.OperatingSystem ?? "-")</td>
+                                <td class="text-center">
+                                    <span class="badge bg-light text-dark">@host.AssetType</span>
+                                </td>
+                                <td class="text-center">
+                                    @switch (host.Status)
+                                    {
+                                        case VulnMgmt.Web.Models.Domain.HostStatus.Active:
+                                            <span class="badge bg-success">Active</span>
+                                            break;
+                                        case VulnMgmt.Web.Models.Domain.HostStatus.Inactive:
+                                            <span class="badge bg-secondary">Inactive</span>
+                                            break;
+                                        case VulnMgmt.Web.Models.Domain.HostStatus.Decommissioned:
+                                            <span class="badge bg-dark">Decommissioned</span>
+                                            break;
+                                        default:
+                                            <span class="badge bg-light text-dark">Unknown</span>
+                                            break;
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    @if (host.OpenVulnCount > 0)
+                                    {
+                                        <span class="badge bg-warning text-dark">@host.OpenVulnCount</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">0</span>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    @if (host.CriticalCount > 0)
+                                    {
+                                        <span class="badge bg-danger">@host.CriticalCount</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">0</span>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    @if (host.HighCount > 0)
+                                    {
+                                        <span class="badge" style="background-color: #fd7e14;">@host.HighCount</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">0</span>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    @if (host.StigChecklistCount > 0)
+                                    {
+                                        <span class="badge bg-info">@host.StigChecklistCount</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">0</span>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    @if (host.StigOpenCount > 0)
+                                    {
+                                        <span class="badge bg-warning text-dark">@host.StigOpenCount</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">0</span>
+                                    }
+                                </td>
+                                <td class="small">
+                                    @if (host.LastScanDate.HasValue)
+                                    {
+                                        @host.LastScanDate.Value.ToString("MM/dd/yy")
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Never</span>
+                                    }
+                                </td>
+                                <td class="text-end">
+                                    <a asp-action="Details" asp-route-id="@host.Id" class="btn btn-sm btn-outline-primary" title="View">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    @if (User.IsInRole("Admin") || User.IsInRole("ISSM"))
+                                    {
+                                        <a asp-action="Edit" asp-route-id="@host.Id" class="btn btn-sm btn-outline-secondary" title="Edit">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer text-muted">
+            Showing @Model.Hosts.Count() hosts
+        </div>
+    </div>
+}

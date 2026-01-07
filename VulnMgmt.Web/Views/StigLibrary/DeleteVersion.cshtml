@@ -1,0 +1,58 @@
+@model VulnMgmt.Web.Models.Domain.StigBenchmarkVersion
+@{
+    ViewData["Title"] = "Delete STIG Version";
+}
+
+<div class="mb-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-1">
+            <li class="breadcrumb-item"><a asp-action="Index">STIG Library</a></li>
+            <li class="breadcrumb-item"><a asp-action="Details" asp-route-id="@Model.StigBenchmarkId">@Model.StigBenchmark.Title</a></li>
+            <li class="breadcrumb-item"><a asp-action="Version" asp-route-id="@Model.Id">V@(Model.Version)R@(Model.Release)</a></li>
+            <li class="breadcrumb-item active">Delete</li>
+        </ol>
+    </nav>
+    <h1 class="h3 text-danger"><i class="bi bi-exclamation-triangle me-2"></i>Delete STIG Version</h1>
+</div>
+
+<div class="card border-danger mb-4">
+    <div class="card-header bg-danger text-white">
+        <i class="bi bi-trash me-2"></i>Confirm Deletion
+    </div>
+    <div class="card-body">
+        <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            <strong>Warning:</strong> This action cannot be undone. All rules for this version will be permanently deleted.
+        </div>
+
+        <h5>You are about to delete:</h5>
+        <dl class="row">
+            <dt class="col-sm-3">STIG Name</dt>
+            <dd class="col-sm-9">@Model.StigBenchmark.Title</dd>
+
+            <dt class="col-sm-3">Version</dt>
+            <dd class="col-sm-9">V@(Model.Version)R@(Model.Release)</dd>
+
+            <dt class="col-sm-3">Release Info</dt>
+            <dd class="col-sm-9">@(Model.ReleaseInfo ?? "-")</dd>
+
+            <dt class="col-sm-3">Rules</dt>
+            <dd class="col-sm-9">@Model.RuleCount rule(s)</dd>
+
+            <dt class="col-sm-3">Imported</dt>
+            <dd class="col-sm-9">@Model.ImportDate.ToString("MM/dd/yyyy HH:mm")</dd>
+        </dl>
+
+        <form asp-action="DeleteVersion" method="post">
+            <input type="hidden" name="id" value="@Model.Id" />
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-danger">
+                    <i class="bi bi-trash me-2"></i>Yes, Delete Version
+                </button>
+                <a asp-action="Version" asp-route-id="@Model.Id" class="btn btn-outline-secondary">
+                    <i class="bi bi-x-lg me-2"></i>Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>

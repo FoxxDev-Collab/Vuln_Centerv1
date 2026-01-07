@@ -1,0 +1,57 @@
+@model VulnMgmt.Web.Models.Domain.StigChecklist
+@{
+    ViewData["Title"] = "Delete Checklist";
+}
+
+<div class="mb-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-1">
+            <li class="breadcrumb-item"><a asp-action="Index">Checklists</a></li>
+            <li class="breadcrumb-item"><a asp-action="Details" asp-route-id="@Model.Id">@(Model.Title ?? "Checklist")</a></li>
+            <li class="breadcrumb-item active">Delete</li>
+        </ol>
+    </nav>
+    <h1 class="h3 text-danger"><i class="bi bi-exclamation-triangle me-2"></i>Delete Checklist</h1>
+</div>
+
+<div class="card border-danger mb-4">
+    <div class="card-header bg-danger text-white">
+        <i class="bi bi-trash me-2"></i>Confirm Deletion
+    </div>
+    <div class="card-body">
+        <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            <strong>Warning:</strong> This action cannot be undone. All results for this checklist will be permanently deleted.
+        </div>
+
+        <h5>You are about to delete:</h5>
+        <dl class="row">
+            <dt class="col-sm-3">Title</dt>
+            <dd class="col-sm-9">@(Model.Title ?? "Unnamed Checklist")</dd>
+
+            <dt class="col-sm-3">Host</dt>
+            <dd class="col-sm-9">@(Model.Host?.DisplayName ?? Model.Host?.DNSName ?? "-")</dd>
+
+            <dt class="col-sm-3">STIG</dt>
+            <dd class="col-sm-9">@(Model.BenchmarkVersion?.StigBenchmark?.Title ?? "-")</dd>
+
+            <dt class="col-sm-3">Version</dt>
+            <dd class="col-sm-9">V@(Model.BenchmarkVersion?.Version)R@(Model.BenchmarkVersion?.Release)</dd>
+
+            <dt class="col-sm-3">Results</dt>
+            <dd class="col-sm-9">@Model.Results.Count result(s)</dd>
+        </dl>
+
+        <form asp-action="Delete" method="post">
+            <input type="hidden" name="id" value="@Model.Id" />
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-danger">
+                    <i class="bi bi-trash me-2"></i>Yes, Delete Checklist
+                </button>
+                <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary">
+                    <i class="bi bi-x-lg me-2"></i>Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>

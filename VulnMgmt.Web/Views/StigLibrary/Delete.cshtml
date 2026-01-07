@@ -1,0 +1,54 @@
+@model VulnMgmt.Web.Models.Domain.StigBenchmark
+@{
+    ViewData["Title"] = "Delete STIG Benchmark";
+}
+
+<div class="mb-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-1">
+            <li class="breadcrumb-item"><a asp-action="Index">STIG Library</a></li>
+            <li class="breadcrumb-item"><a asp-action="Details" asp-route-id="@Model.Id">@Model.Title</a></li>
+            <li class="breadcrumb-item active">Delete</li>
+        </ol>
+    </nav>
+    <h1 class="h3 text-danger"><i class="bi bi-exclamation-triangle me-2"></i>Delete STIG Benchmark</h1>
+</div>
+
+<div class="card border-danger mb-4">
+    <div class="card-header bg-danger text-white">
+        <i class="bi bi-trash me-2"></i>Confirm Deletion
+    </div>
+    <div class="card-body">
+        <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            <strong>Warning:</strong> This action cannot be undone. All versions and rules associated with this benchmark will be permanently deleted.
+        </div>
+
+        <h5>You are about to delete:</h5>
+        <dl class="row">
+            <dt class="col-sm-3">STIG Name</dt>
+            <dd class="col-sm-9">@Model.Title</dd>
+
+            <dt class="col-sm-3">STIG ID</dt>
+            <dd class="col-sm-9"><code>@Model.StigId</code></dd>
+
+            <dt class="col-sm-3">Versions</dt>
+            <dd class="col-sm-9">@Model.Versions.Count version(s)</dd>
+
+            <dt class="col-sm-3">Total Rules</dt>
+            <dd class="col-sm-9">@Model.Versions.Sum(v => v.RuleCount) rule(s)</dd>
+        </dl>
+
+        <form asp-action="Delete" method="post">
+            <input type="hidden" asp-for="Id" />
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-danger">
+                    <i class="bi bi-trash me-2"></i>Yes, Delete Benchmark
+                </button>
+                <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary">
+                    <i class="bi bi-x-lg me-2"></i>Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>

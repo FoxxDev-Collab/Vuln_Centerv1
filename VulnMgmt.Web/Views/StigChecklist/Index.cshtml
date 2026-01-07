@@ -1,0 +1,156 @@
+@using VulnMgmt.Web.Models.Domain
+@model IEnumerable<StigChecklist>
+@{
+    ViewData["Title"] = "STIG Checklists";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="bi bi-clipboard-check me-2"></i>STIG Checklists</h1>
+    @if (User.IsInRole("Admin") || User.IsInRole("ISSM") || User.IsInRole("ISSO") || User.IsInRole("SysAdmin"))
+    {
+        <div class="d-flex gap-2">
+            <a asp-action="Import" class="btn btn-outline-primary">
+                <i class="bi bi-upload me-1"></i>Import CKLB
+            </a>
+            <a asp-action="Create" class="btn btn-primary">
+                <i class="bi bi-plus-lg me-1"></i>New Checklist
+            </a>
+        </div>
+    }
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle me-1"></i>@TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle me-1"></i>No checklists created yet.
+        @if (User.IsInRole("Admin") || User.IsInRole("ISSM") || User.IsInRole("ISSO") || User.IsInRole("SysAdmin"))
+        {
+            @:<a asp-action="Create">Create your first checklist</a> or <a asp-action="Import">import a CKLB file</a>.
+        }
+    </div>
+}
+else
+{
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Checklist</th>
+                            <th>Host</th>
+                            <th>STIG</th>
+                            <th class="text-center">Status</th>
+                            <th class="text-center">Open</th>
+                            <th class="text-center">Not a Finding</th>
+                            <th class="text-center">N/A</th>
+                            <th class="text-center">Not Reviewed</th>
+                            <th>Last Modified</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var checklist in Model)
+                        {
+                            var totalResults = checklist.OpenCount + checklist.NotAFindingCount + checklist.NotApplicableCount + checklist.NotReviewedCount;
+                            var completionPct = totalResults > 0 ? ((checklist.OpenCount + checklist.NotAFindingCount + checklist.NotApplicableCount) * 100 / totalResults) : 0;
+                            <tr>
+                                <td>
+                                    <a asp-action="Details" asp-route-id="@checklist.Id" class="fw-semibold text-decoration-none">
+                                        @(checklist.Title ?? "Unnamed Checklist")
+                                    </a>
+                                </td>
+                                <td>
+                                    <a asp-controller="Host" asp-action="Details" asp-route-id="@checklist.HostId" class="text-decoration-none">
+                                        @(checklist.Host?.DisplayName ?? checklist.Host?.DNSName ?? "-")
+                                    </a>
+                                    @if (checklist.Host?.Site != null)
+                                    {
+                                        <br /><small class="text-muted">@checklist.Host.Site.Name</small>
+                                    }
+                                </td>
+                                <td>
+                                    <small>@checklist.BenchmarkVersion?.StigBenchmark?.Title</small>
+                                    @if (checklist.BenchmarkVersion != null)
+                                    {
+                                        <br /><small class="text-muted">V@(checklist.BenchmarkVersion.Version)R@(checklist.BenchmarkVersion.Release)</small>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    @{
+                                        var statusClass = checklist.Status switch
+                                        {
+                                            ChecklistStatus.Complete => "bg-success",
+                                            ChecklistStatus.InProgress => "bg-warning text-dark",
+                                            _ => "bg-secondary"
+                                        };
+                                    }
+                                    <span class="badge @statusClass">@checklist.Status</span>
+                                </td>
+                                <td class="text-center">
+                                    @if (checklist.OpenCount > 0)
+                                    {
+                                        <span class="badge bg-danger">@checklist.OpenCount</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">0</span>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    @if (checklist.NotAFindingCount > 0)
+                                    {
+                                        <span class="badge bg-success">@checklist.NotAFindingCount</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">0</span>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    @if (checklist.NotApplicableCount > 0)
+                                    {
+                                        <span class="badge bg-info">@checklist.NotApplicableCount</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">0</span>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    @if (checklist.NotReviewedCount > 0)
+                                    {
+                                        <span class="badge bg-secondary">@checklist.NotReviewedCount</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">0</span>
+                                    }
+                                </td>
+                                <td>
+                                    <small>@checklist.LastModifiedDate.ToString("MM/dd/yyyy HH:mm")</small>
+                                </td>
+                                <td class="text-end">
+                                    <a asp-action="Details" asp-route-id="@checklist.Id" class="btn btn-sm btn-outline-primary" title="View">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a asp-action="Export" asp-route-id="@checklist.Id" class="btn btn-sm btn-outline-success" title="Export CKLB">
+                                        <i class="bi bi-download"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+}

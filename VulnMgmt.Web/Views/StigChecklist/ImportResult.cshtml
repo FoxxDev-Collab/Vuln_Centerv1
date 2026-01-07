@@ -1,0 +1,155 @@
+@model VulnMgmt.Web.Services.ChecklistImportResult
+@{
+    ViewData["Title"] = "Import Results";
+}
+
+<div class="mb-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-1">
+            <li class="breadcrumb-item"><a asp-action="Index">Checklists</a></li>
+            <li class="breadcrumb-item"><a asp-action="Import">Import</a></li>
+            <li class="breadcrumb-item active">Results</li>
+        </ol>
+    </nav>
+    <h1 class="h3">
+        @if (Model.Success)
+        {
+            <i class="bi bi-check-circle text-success me-2"></i>
+        }
+        else
+        {
+            <i class="bi bi-x-circle text-danger me-2"></i>
+        }
+        Import Results
+    </h1>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-danger">
+        <i class="bi bi-exclamation-triangle me-2"></i>@Model.ErrorMessage
+    </div>
+}
+else
+{
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="h2 mb-0 text-primary">@Model.TotalRules</div>
+                    <small class="text-muted">Total Rules</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="h2 mb-0 text-success">@Model.ResultsImported</div>
+                    <small class="text-muted">New Results</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="h2 mb-0 text-info">@Model.ResultsUpdated</div>
+                    <small class="text-muted">Updated</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    @if (Model.IsNewChecklist)
+                    {
+                        <span class="badge bg-success fs-6">New</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-info fs-6">Updated</span>
+                    }
+                    <br /><small class="text-muted">Checklist</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="bi bi-clipboard-check me-2"></i>Checklist Summary
+        </div>
+        <div class="card-body">
+            <dl class="row">
+                <dt class="col-sm-3">STIG</dt>
+                <dd class="col-sm-9">@Model.StigName</dd>
+
+                <dt class="col-sm-3">Version</dt>
+                <dd class="col-sm-9">V@Model.Version</dd>
+            </dl>
+
+            <h6>Status Distribution</h6>
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="d-flex align-items-center">
+                        <span class="badge bg-danger me-2">@Model.OpenCount</span>
+                        <span>Open</span>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="d-flex align-items-center">
+                        <span class="badge bg-success me-2">@Model.NotAFindingCount</span>
+                        <span>Not a Finding</span>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="d-flex align-items-center">
+                        <span class="badge bg-info me-2">@Model.NotApplicableCount</span>
+                        <span>Not Applicable</span>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="d-flex align-items-center">
+                        <span class="badge bg-secondary me-2">@Model.NotReviewedCount</span>
+                        <span>Not Reviewed</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@if (Model.Warnings.Any())
+{
+    <div class="card mb-4 border-warning">
+        <div class="card-header bg-warning bg-opacity-25">
+            <i class="bi bi-exclamation-triangle me-2"></i>Warnings (@Model.Warnings.Count)
+        </div>
+        <div class="card-body">
+            <ul class="mb-0 small">
+                @foreach (var warning in Model.Warnings.Take(20))
+                {
+                    <li>@warning</li>
+                }
+                @if (Model.Warnings.Count > 20)
+                {
+                    <li class="text-muted">... and @(Model.Warnings.Count - 20) more</li>
+                }
+            </ul>
+        </div>
+    </div>
+}
+
+<div class="d-flex gap-2">
+    @if (Model.Success && Model.ChecklistId > 0)
+    {
+        <a asp-action="Details" asp-route-id="@Model.ChecklistId" class="btn btn-primary">
+            <i class="bi bi-clipboard-check me-2"></i>View Checklist
+        </a>
+    }
+    <a asp-action="Import" class="btn btn-outline-secondary">
+        <i class="bi bi-upload me-2"></i>Import Another
+    </a>
+    <a asp-action="Index" class="btn btn-outline-secondary">
+        <i class="bi bi-list me-2"></i>All Checklists
+    </a>
+</div>

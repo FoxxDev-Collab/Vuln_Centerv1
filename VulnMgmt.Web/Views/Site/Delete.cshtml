@@ -1,0 +1,60 @@
+@model VulnMgmt.Web.Models.Domain.Site
+@{
+    ViewData["Title"] = "Delete Site";
+}
+
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-action="Index">Sites</a></li>
+        <li class="breadcrumb-item"><a asp-action="Details" asp-route-id="@Model.Id">@Model.Name</a></li>
+        <li class="breadcrumb-item active">Delete</li>
+    </ol>
+</nav>
+
+<h1 class="mb-4 text-danger"><i class="bi bi-trash me-2"></i>Delete Site</h1>
+
+<div class="row">
+    <div class="col-lg-6">
+        <div class="alert alert-danger">
+            <h5 class="alert-heading"><i class="bi bi-exclamation-triangle me-1"></i>Warning</h5>
+            <p>You are about to delete the site <strong>@Model.Name</strong>.</p>
+            <hr>
+            <p class="mb-0">
+                This will also delete <strong>@Model.Hosts.Count host(s)</strong> and all associated vulnerability data.
+                This action cannot be undone.
+            </p>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">Site Details</div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Name</dt>
+                    <dd class="col-sm-8">@Model.Name</dd>
+
+                    <dt class="col-sm-4">Organization</dt>
+                    <dd class="col-sm-8">@(Model.OrganizationName ?? "-")</dd>
+
+                    <dt class="col-sm-4">Location</dt>
+                    <dd class="col-sm-8">@(Model.Location ?? "-")</dd>
+
+                    <dt class="col-sm-4">Hosts</dt>
+                    <dd class="col-sm-8">@Model.Hosts.Count</dd>
+
+                    <dt class="col-sm-4">Created</dt>
+                    <dd class="col-sm-8">@Model.CreatedDate.ToString("MM/dd/yyyy")</dd>
+                </dl>
+            </div>
+        </div>
+
+        <form asp-action="Delete" method="post">
+            <input type="hidden" name="id" value="@Model.Id" />
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-danger">
+                    <i class="bi bi-trash me-1"></i>Yes, Delete Site
+                </button>
+                <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>

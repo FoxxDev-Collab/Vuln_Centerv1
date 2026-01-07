@@ -1,0 +1,107 @@
+@model VulnMgmt.Web.Models.Domain.ScanImport
+@{
+    ViewData["Title"] = "Import Details";
+}
+
+<div class="mb-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-1">
+            <li class="breadcrumb-item"><a asp-action="Index">Scan Imports</a></li>
+            <li class="breadcrumb-item active">@Model.FileName</li>
+        </ol>
+    </nav>
+    <h1 class="h3"><i class="bi bi-file-earmark-text me-2"></i>Import Details</h1>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-info-circle me-2"></i>Import Information
+            </div>
+            <div class="card-body">
+                <dl class="row">
+                    <dt class="col-sm-3">File Name</dt>
+                    <dd class="col-sm-9">@Model.FileName</dd>
+
+                    <dt class="col-sm-3">Site</dt>
+                    <dd class="col-sm-9">
+                        <a asp-controller="Site" asp-action="Details" asp-route-id="@Model.SiteId">
+                            @Model.Site.Name
+                        </a>
+                    </dd>
+
+                    <dt class="col-sm-3">Import Date</dt>
+                    <dd class="col-sm-9">@Model.ImportDate.ToString("f")</dd>
+
+                    <dt class="col-sm-3">Imported By</dt>
+                    <dd class="col-sm-9">@(Model.ImportedBy?.DisplayName ?? Model.ImportedBy?.Username ?? "System")</dd>
+
+                    @if (!string.IsNullOrEmpty(Model.Notes))
+                    {
+                        <dt class="col-sm-3">Notes</dt>
+                        <dd class="col-sm-9">@Model.Notes</dd>
+                    }
+                </dl>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-bar-chart me-2"></i>Import Statistics
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-2 col-4 mb-3">
+                        <div class="border rounded p-3">
+                            <div class="h3 mb-0 text-primary">@Model.TotalRows.ToString("N0")</div>
+                            <small class="text-muted">Total Rows</small>
+                        </div>
+                    </div>
+                    <div class="col-md-2 col-4 mb-3">
+                        <div class="border rounded p-3">
+                            <div class="h3 mb-0 text-success">@Model.HostsCreated.ToString("N0")</div>
+                            <small class="text-muted">Hosts Created</small>
+                        </div>
+                    </div>
+                    <div class="col-md-2 col-4 mb-3">
+                        <div class="border rounded p-3">
+                            <div class="h3 mb-0 text-info">@Model.HostsUpdated.ToString("N0")</div>
+                            <small class="text-muted">Hosts Updated</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6 mb-3">
+                        <div class="border rounded p-3">
+                            <div class="h3 mb-0 text-success">@Model.VulnerabilitiesImported.ToString("N0")</div>
+                            <small class="text-muted">Vulns Imported</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6 mb-3">
+                        <div class="border rounded p-3">
+                            <div class="h3 mb-0 text-info">@Model.VulnerabilitiesUpdated.ToString("N0")</div>
+                            <small class="text-muted">Vulns Updated</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex gap-2">
+            <a asp-action="Index" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-2"></i>Back to List
+            </a>
+            <a asp-controller="Vulnerability" asp-action="Index" class="btn btn-outline-info">
+                <i class="bi bi-bug me-2"></i>View Vulnerabilities
+            </a>
+            <a asp-controller="Host" asp-action="Index" asp-route-siteId="@Model.SiteId" class="btn btn-outline-primary">
+                <i class="bi bi-pc-display me-2"></i>View Hosts
+            </a>
+            @if (User.IsInRole("Admin") || User.IsInRole("ISSM"))
+            {
+                <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger">
+                    <i class="bi bi-trash me-2"></i>Delete Record
+                </a>
+            }
+        </div>
+    </div>
+</div>

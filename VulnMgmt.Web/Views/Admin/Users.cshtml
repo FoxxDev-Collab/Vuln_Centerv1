@@ -1,0 +1,121 @@
+@model IEnumerable<VulnMgmt.Web.Models.Domain.User>
+@{
+    ViewData["Title"] = "User Management";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3"><i class="bi bi-people me-2"></i>User Management</h1>
+        <p class="text-muted mb-0">Manage system users and their roles</p>
+    </div>
+    <a asp-action="CreateUser" class="btn btn-primary">
+        <i class="bi bi-person-plus me-2"></i>Add User
+    </a>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Username</th>
+                    <th>Display Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Auth Type</th>
+                    <th>Status</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var user in Model)
+                {
+                    <tr class="@(!user.IsActive ? "table-secondary" : "")">
+                        <td>@user.Username</td>
+                        <td>@user.DisplayName</td>
+                        <td>@user.Email</td>
+                        <td>
+                            @{
+                                var roleClass = user.Role switch
+                                {
+                                    VulnMgmt.Web.Models.Domain.UserRole.Admin => "bg-danger",
+                                    VulnMgmt.Web.Models.Domain.UserRole.ISSM => "bg-warning text-dark",
+                                    VulnMgmt.Web.Models.Domain.UserRole.ISSO => "bg-info",
+                                    VulnMgmt.Web.Models.Domain.UserRole.SysAdmin => "bg-info",
+                                    VulnMgmt.Web.Models.Domain.UserRole.Auditor => "bg-secondary",
+                                    _ => "bg-secondary"
+                                };
+                            }
+                            <span class="badge @roleClass">@user.Role</span>
+                        </td>
+                        <td>
+                            @if (user.IsWindowsAuth)
+                            {
+                                <span class="badge bg-primary"><i class="bi bi-windows me-1"></i>Windows</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary"><i class="bi bi-key me-1"></i>Local</span>
+                            }
+                        </td>
+                        <td>
+                            @if (user.IsActive)
+                            {
+                                <span class="badge bg-success">Active</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-danger">Inactive</span>
+                            }
+                        </td>
+                        <td class="text-end">
+                            <div class="btn-group btn-group-sm">
+                                <a asp-action="EditUser" asp-route-id="@user.Id" class="btn btn-outline-secondary" title="Edit">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                @if (User.IsInRole("Admin"))
+                                {
+                                    <a asp-action="DeleteUser" asp-route-id="@user.Id" class="btn btn-outline-danger" title="Delete">
+                                        <i class="bi bi-trash"></i>
+                                    </a>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="mt-4">
+    <div class="card">
+        <div class="card-header">
+            <i class="bi bi-info-circle me-2"></i>Role Descriptions
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4 mb-2">
+                    <span class="badge bg-danger me-2">Admin</span>
+                    <small>Full system access, user management</small>
+                </div>
+                <div class="col-md-4 mb-2">
+                    <span class="badge bg-warning text-dark me-2">ISSM</span>
+                    <small>Manager - full access to sites, hosts, scans</small>
+                </div>
+                <div class="col-md-4 mb-2">
+                    <span class="badge bg-info me-2">ISSO</span>
+                    <small>Import/export, cannot manage sites/hosts</small>
+                </div>
+                <div class="col-md-4 mb-2">
+                    <span class="badge bg-info me-2">SysAdmin</span>
+                    <small>View all, update remediation status</small>
+                </div>
+                <div class="col-md-4 mb-2">
+                    <span class="badge bg-secondary me-2">Auditor</span>
+                    <small>Read-only access, exports</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

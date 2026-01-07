@@ -1,0 +1,182 @@
+@model VulnMgmt.Web.Services.StigImportResult
+@{
+    ViewData["Title"] = "Import Results";
+}
+
+<div class="mb-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-1">
+            <li class="breadcrumb-item"><a asp-action="Index">STIG Library</a></li>
+            <li class="breadcrumb-item"><a asp-action="Import">Import</a></li>
+            <li class="breadcrumb-item active">Results</li>
+        </ol>
+    </nav>
+    <h1 class="h3">
+        @if (Model.Success && !Model.Errors.Any())
+        {
+            <i class="bi bi-check-circle text-success me-2"></i>
+        }
+        else if (Model.Errors.Any())
+        {
+            <i class="bi bi-exclamation-triangle text-warning me-2"></i>
+        }
+        else
+        {
+            <i class="bi bi-x-circle text-danger me-2"></i>
+        }
+        Import Results
+    </h1>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-danger">
+        <i class="bi bi-exclamation-triangle me-2"></i>@Model.ErrorMessage
+    </div>
+}
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <div class="h2 mb-0 text-primary">@Model.FilesProcessed</div>
+                <small class="text-muted">Files Processed</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <div class="h2 mb-0 text-success">@Model.BenchmarksImported</div>
+                <small class="text-muted">New Benchmarks</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <div class="h2 mb-0 text-info">@Model.VersionsCreated</div>
+                <small class="text-muted">Versions Created</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <div class="h2 mb-0 text-secondary">@Model.RulesImported.ToString("N0")</div>
+                <small class="text-muted">Rules Imported</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (Model.ImportedBenchmarks.Any())
+{
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="bi bi-journal-check me-2"></i>Imported Benchmarks
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>STIG Name</th>
+                            <th>STIG ID</th>
+                            <th class="text-center">Version</th>
+                            <th class="text-center">Release</th>
+                            <th class="text-center">Rules</th>
+                            <th class="text-center">Status</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var benchmark in Model.ImportedBenchmarks)
+                        {
+                            <tr>
+                                <td>@benchmark.Title</td>
+                                <td><code>@benchmark.StigId</code></td>
+                                <td class="text-center">
+                                    <span class="badge bg-primary">V@(benchmark.Version)</span>
+                                </td>
+                                <td class="text-center">
+                                    @if (!string.IsNullOrEmpty(benchmark.Release))
+                                    {
+                                        <span>R@(benchmark.Release)</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                                <td class="text-center">@benchmark.RuleCount</td>
+                                <td class="text-center">
+                                    @if (benchmark.IsNewBenchmark)
+                                    {
+                                        <span class="badge bg-success">New</span>
+                                    }
+                                    else if (benchmark.IsNewVersion)
+                                    {
+                                        <span class="badge bg-info">Updated</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Exists</span>
+                                    }
+                                </td>
+                                <td class="text-end">
+                                    <a asp-action="Version" asp-route-id="@benchmark.VersionId" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-eye me-1"></i>View
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+}
+
+@if (Model.Warnings.Any())
+{
+    <div class="card mb-4 border-warning">
+        <div class="card-header bg-warning bg-opacity-25">
+            <i class="bi bi-exclamation-triangle me-2"></i>Warnings (@Model.Warnings.Count)
+        </div>
+        <div class="card-body">
+            <ul class="mb-0 small">
+                @foreach (var warning in Model.Warnings)
+                {
+                    <li>@warning</li>
+                }
+            </ul>
+        </div>
+    </div>
+}
+
+@if (Model.Errors.Any())
+{
+    <div class="card mb-4 border-danger">
+        <div class="card-header bg-danger bg-opacity-25">
+            <i class="bi bi-x-circle me-2"></i>Errors (@Model.Errors.Count)
+        </div>
+        <div class="card-body">
+            <ul class="mb-0 small">
+                @foreach (var error in Model.Errors)
+                {
+                    <li>@error</li>
+                }
+            </ul>
+        </div>
+    </div>
+}
+
+<div class="d-flex gap-2">
+    <a asp-action="Index" class="btn btn-primary">
+        <i class="bi bi-journal-bookmark me-2"></i>View Library
+    </a>
+    <a asp-action="Import" class="btn btn-outline-secondary">
+        <i class="bi bi-upload me-2"></i>Import More
+    </a>
+</div>

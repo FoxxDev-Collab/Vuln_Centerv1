@@ -1,0 +1,166 @@
+@model VulnMgmt.Web.Models.Domain.StigRule
+@{
+    ViewData["Title"] = $"{Model.VulnId} - {Model.RuleTitle}";
+    var sevClass = Model.Severity switch
+    {
+        VulnMgmt.Web.Models.Domain.StigSeverity.High => "bg-danger",
+        VulnMgmt.Web.Models.Domain.StigSeverity.Medium => "bg-warning text-dark",
+        VulnMgmt.Web.Models.Domain.StigSeverity.Low => "bg-info",
+        _ => "bg-secondary"
+    };
+    var catLabel = Model.Severity switch
+    {
+        VulnMgmt.Web.Models.Domain.StigSeverity.High => "CAT I (High)",
+        VulnMgmt.Web.Models.Domain.StigSeverity.Medium => "CAT II (Medium)",
+        VulnMgmt.Web.Models.Domain.StigSeverity.Low => "CAT III (Low)",
+        _ => "Unknown"
+    };
+}
+
+<div class="mb-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-1">
+            <li class="breadcrumb-item"><a asp-action="Index">STIG Library</a></li>
+            <li class="breadcrumb-item"><a asp-action="Details" asp-route-id="@Model.BenchmarkVersion.StigBenchmarkId">@Model.BenchmarkVersion.StigBenchmark.Title</a></li>
+            <li class="breadcrumb-item"><a asp-action="Version" asp-route-id="@Model.BenchmarkVersionId">V@(Model.BenchmarkVersion.Version)R@(Model.BenchmarkVersion.Release)</a></li>
+            <li class="breadcrumb-item active">@Model.VulnId</li>
+        </ol>
+    </nav>
+    <div class="d-flex justify-content-between align-items-start">
+        <div>
+            <h1 class="h3">
+                <span class="badge @sevClass me-2">@catLabel</span>
+                @Model.VulnId
+            </h1>
+            <p class="text-muted mb-0">@Model.RuleTitle</p>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-shield-exclamation me-2"></i>Vulnerability Details
+            </div>
+            <div class="card-body">
+                <h6>Discussion</h6>
+                <div class="border rounded p-3 bg-light mb-4" style="white-space: pre-wrap;">@(Model.Discussion ?? "No discussion available.")</div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-clipboard-check me-2"></i>Check Content
+            </div>
+            <div class="card-body">
+                <div class="border rounded p-3 bg-light" style="white-space: pre-wrap;">@(Model.CheckContent ?? "No check content available.")</div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-tools me-2"></i>Fix Text
+            </div>
+            <div class="card-body">
+                <div class="border rounded p-3 bg-light" style="white-space: pre-wrap;">@(Model.FixText ?? "No fix text available.")</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-info-square me-2"></i>Rule Information
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-5">Vuln ID</dt>
+                    <dd class="col-sm-7"><code>@Model.VulnId</code></dd>
+
+                    <dt class="col-sm-5">Rule ID</dt>
+                    <dd class="col-sm-7"><code class="small">@Model.RuleId</code></dd>
+
+                    @if (!string.IsNullOrEmpty(Model.RuleVersion))
+                    {
+                        <dt class="col-sm-5">Rule Version</dt>
+                        <dd class="col-sm-7"><code>@Model.RuleVersion</code></dd>
+                    }
+
+                    <dt class="col-sm-5">Severity</dt>
+                    <dd class="col-sm-7"><span class="badge @sevClass">@catLabel</span></dd>
+
+                    @if (Model.Weight.HasValue)
+                    {
+                        <dt class="col-sm-5">Weight</dt>
+                        <dd class="col-sm-7">@Model.Weight.Value</dd>
+                    }
+
+                    @if (!string.IsNullOrEmpty(Model.GroupTitle))
+                    {
+                        <dt class="col-sm-5">SRG</dt>
+                        <dd class="col-sm-7"><small>@Model.GroupTitle</small></dd>
+                    }
+                </dl>
+            </div>
+        </div>
+
+        @if (!string.IsNullOrEmpty(Model.CCIs))
+        {
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-link-45deg me-2"></i>CCIs
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        @foreach (var cci in Model.CCIs.Split(','))
+                        {
+                            <li>
+                                <a href="https://ncp.nist.gov/cce/index.cfm?keyword=@cci.Trim()" target="_blank" class="text-decoration-none">
+                                    <i class="bi bi-box-arrow-up-right me-1 small"></i>@cci.Trim()
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        }
+
+        @if (!string.IsNullOrEmpty(Model.LegacyIds))
+        {
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-archive me-2"></i>Legacy IDs
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0 small">
+                        @foreach (var legacyId in Model.LegacyIds.Split(','))
+                        {
+                            <li><code>@legacyId.Trim()</code></li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        }
+
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-journal-bookmark me-2"></i>Benchmark Info
+            </div>
+            <div class="card-body">
+                <p class="small mb-1"><strong>@Model.BenchmarkVersion.StigBenchmark.Title</strong></p>
+                <p class="small text-muted mb-0">
+                    Version @Model.BenchmarkVersion.Version
+                    @if (!string.IsNullOrEmpty(Model.BenchmarkVersion.Release))
+                    {
+                        <span>Release @Model.BenchmarkVersion.Release</span>
+                    }
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<a asp-action="Version" asp-route-id="@Model.BenchmarkVersionId" class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-left me-2"></i>Back to Rules
+</a>

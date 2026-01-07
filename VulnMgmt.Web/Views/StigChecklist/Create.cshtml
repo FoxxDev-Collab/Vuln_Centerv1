@@ -1,0 +1,106 @@
+@{
+    ViewData["Title"] = "Create Checklist";
+    var hosts = ViewBag.Hosts as SelectList;
+    var benchmarks = ViewBag.Benchmarks as IEnumerable<SelectListItem>;
+    var selectedHostId = ViewBag.SelectedHostId as int?;
+}
+
+<div class="mb-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-1">
+            <li class="breadcrumb-item"><a asp-action="Index">Checklists</a></li>
+            <li class="breadcrumb-item active">Create</li>
+        </ol>
+    </nav>
+    <h1 class="h3"><i class="bi bi-plus-circle me-2"></i>Create STIG Checklist</h1>
+</div>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle me-1"></i>@TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="row">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-clipboard-check me-2"></i>New Checklist
+            </div>
+            <div class="card-body">
+                <form asp-action="Create" method="post">
+                    <div class="mb-3">
+                        <label for="hostId" class="form-label">Host <span class="text-danger">*</span></label>
+                        <select name="hostId" id="hostId" class="form-select" required asp-items="@hosts">
+                            <option value="">-- Select Host --</option>
+                        </select>
+                        <div class="form-text">Select the host this checklist is for.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="benchmarkVersionId" class="form-label">STIG Benchmark <span class="text-danger">*</span></label>
+                        <select name="benchmarkVersionId" id="benchmarkVersionId" class="form-select" required>
+                            <option value="">-- Select STIG --</option>
+                            @if (benchmarks != null)
+                            {
+                                @foreach (var item in benchmarks)
+                                {
+                                    <option value="@item.Value">@item.Text</option>
+                                }
+                            }
+                        </select>
+                        <div class="form-text">Select the STIG to evaluate against.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Title (Optional)</label>
+                        <input type="text" name="title" id="title" class="form-control"
+                               placeholder="Leave blank for auto-generated title">
+                        <div class="form-text">Custom title for this checklist.</div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-plus-circle me-2"></i>Create Checklist
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-info-circle me-2"></i>Information
+            </div>
+            <div class="card-body">
+                <h6>What happens when you create a checklist?</h6>
+                <ul class="small">
+                    <li>A new checklist is created linked to the selected host and STIG</li>
+                    <li>All rules from the STIG are added with "Not Reviewed" status</li>
+                    <li>You can then review each rule and update its status</li>
+                </ul>
+
+                <h6>Alternative: Import CKLB</h6>
+                <p class="small">
+                    If you have an existing CKLB file from STIG Viewer, you can
+                    <a asp-action="Import" asp-route-hostId="@selectedHostId">import it instead</a>.
+                </p>
+
+                <div class="alert alert-info small mb-0">
+                    <i class="bi bi-lightbulb me-2"></i>
+                    <strong>Note:</strong> Make sure the STIG is already imported into the STIG Library before creating a checklist.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="mt-3">
+    <a asp-action="Index" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-2"></i>Back to Checklists
+    </a>
+</div>
